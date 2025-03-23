@@ -1,0 +1,35 @@
+{
+  "name": "org.eframework.u3d.fgui",
+  "displayName": "U3D.FGUI",
+  "description": "U3D.FGUI 是一个基于 FairyGUI 的拓展模块，提供了画布组件、资源包管理等核心功能，支持自定义加载器、自动处理包依赖关系以及编辑器扩展等特性。",
+  "version": "0.0.1",
+  "unity": "2021.3",
+  "license": "MIT",
+  "author": {
+    "name": "EFramework Organization",
+    "email": "eframework-org@outlook.com",
+    "url": "https://github.com/eframework-org"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eframework-org/U3D.FGUI.git"
+  },
+  "bugs": {
+    "url": "https://github.com/eframework-org/U3D.FGUI/issues"
+  },
+  "keywords": [
+    "eframework",
+    "package",
+    "unity",
+    "fgui",
+    "fairy gui"
+  ],
+  "dependencies": {
+    "org.eframework.u3d.util": "0.0.1",
+    "org.eframework.u3d.edit": "0.0.1"
+  },
+  "puerExports": [
+    "FairyGUI",
+    "EFramework.FairyGUI"
+  ]
+}

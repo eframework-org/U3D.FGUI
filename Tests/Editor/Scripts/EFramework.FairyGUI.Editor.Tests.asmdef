@@ -1,0 +1,22 @@
+{
+    "name": "EFramework.FairyGUI.Editor.Tests",
+    "rootNamespace": "",
+    "references": [
+        "UnityEngine.TestRunner",
+        "EFramework.FairyGUI",
+        "EFramework.FairyGUI.Editor",
+        "EFramework.Utility",
+        "EFramework.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
