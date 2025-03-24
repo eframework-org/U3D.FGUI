@@ -17,16 +17,16 @@ using System.Collections.Generic;
 public class TestUIManifestEditor
 {
     const string TEST_MANIFEST_PATH = "Assets/Temp/TestManifest/TestManifest.prefab";
-    const string TEST_DOCS_PATH = "Assets/Temp/DocsPath";
+    const string TEST_RAW_PATH = "Assets/Temp/RawPath";
     const string PACKAGE1_PATH = "Assets/Temp/Package1/Package1.prefab";
     const string PACKAGE2_PATH = "Assets/Temp/Package2/Package2.prefab";
-    const string PACKAGE1_DOCS_PATH = "Assets/Temp/Package1Docs";
-    const string PACKAGE2_DOCS_PATH = "Assets/Temp/Package2Docs";
+    const string PACKAGE1_RAW_PATH = "Assets/Temp/Package1Raw";
+    const string PACKAGE2_RAW_PATH = "Assets/Temp/Package2Raw";
 
     [SetUp]
     public void Setup()
     {
-        if (!XFile.HasDirectory(TEST_DOCS_PATH)) XFile.CreateDirectory(TEST_DOCS_PATH);
+        if (!XFile.HasDirectory(TEST_RAW_PATH)) XFile.CreateDirectory(TEST_RAW_PATH);
         var prefabDir = Path.GetDirectoryName(TEST_MANIFEST_PATH);
         if (!XFile.HasDirectory(prefabDir)) XFile.CreateDirectory(prefabDir);
 
@@ -35,7 +35,7 @@ public class TestUIManifestEditor
     [TearDown]
     public void Reset()
     {
-        if (XFile.HasDirectory(TEST_DOCS_PATH)) XFile.DeleteDirectory(TEST_DOCS_PATH);
+        if (XFile.HasDirectory(TEST_RAW_PATH)) XFile.DeleteDirectory(TEST_RAW_PATH);
         var prefabDir = Path.GetDirectoryName(TEST_MANIFEST_PATH);
         if (XFile.HasDirectory(prefabDir)) XFile.DeleteDirectory(prefabDir);
     }
@@ -66,7 +66,7 @@ public class TestUIManifestEditor
 
         PrefabUtility.SaveAsPrefabAsset(go, TEST_MANIFEST_PATH);
         GameObject.DestroyImmediate(go);
-        LogAssert.Expect(LogType.Error, new Regex(@".*UIManifestEditor.Import: docs path doesn't exist.*"));
+        LogAssert.Expect(LogType.Error, new Regex(@"UIManifestEditor\.Import: raw path doesn't exist: .*"));
         // Act
         UIManifestEditor.Collect(TEST_MANIFEST_PATH);
 
@@ -87,11 +87,11 @@ public class TestUIManifestEditor
     public void Create()
     {
         // 创建测试用的fui.bytes文件
-        var fuiBytesPath = XFile.PathJoin(TEST_DOCS_PATH, "TestManifest_fui.bytes");
+        var fuiBytesPath = XFile.PathJoin(TEST_RAW_PATH, "TestManifest_fui.bytes");
         XFile.SaveText(fuiBytesPath, "test content");
 
         // Act
-        var asset = UIManifestEditor.Create(TEST_MANIFEST_PATH, TEST_DOCS_PATH);
+        var asset = UIManifestEditor.Create(TEST_MANIFEST_PATH, TEST_RAW_PATH);
 
         // Assert
         Assert.IsNotNull(asset, "应该成功创建资产");
@@ -100,14 +100,14 @@ public class TestUIManifestEditor
 
         var manifest = prefab.GetComponent<UIManifest>();
         Assert.IsNotNull(manifest, "预制体应该包含UIManifest组件");
-        Assert.AreEqual(TEST_DOCS_PATH, manifest.DocsPath, "DocsPath应该被正确设置");
+        Assert.AreEqual(TEST_RAW_PATH, manifest.RawPath, "RawPath应该被正确设置");
     }
 
     [Test]
     public void Import()
     {
         // 测试manifest不存在的情况
-        LogAssert.Expect(LogType.Error, new Regex(@".*UIManifestEditor.Import: null manifest at:.*"));
+        LogAssert.Expect(LogType.Error, new Regex(@"UIManifestEditor\.Import: null manifest at: .*"));
         var go = new GameObject();
         var nonExistentPath = "Assets/Temp/NonManifest.prefab";
         PrefabUtility.SaveAsPrefabAsset(go, nonExistentPath);
@@ -116,21 +116,21 @@ public class TestUIManifestEditor
         Object.DestroyImmediate(go);
         XFile.DeleteFile(nonExistentPath);
 
-        // 创建一个manifest，但设置一个不存在的DocsPath
-        LogAssert.Expect(LogType.Error, new Regex(@".*UIManifestEditor.Import: docs path doesn't exist:.*"));
+        // 创建一个manifest，但设置一个不存在的RawPath
+        LogAssert.Expect(LogType.Error, new Regex(@"UIManifestEditor\.Import: raw path doesn't exist: .*"));
         go = new GameObject();
-        var nonDocsManifest = go.AddComponent<UIManifest>();
-        nonDocsManifest.DocsPath = "Assets/Temp/NonDocsPath";
+        var nonRawManifest = go.AddComponent<UIManifest>();
+        nonRawManifest.RawPath = "Assets/Temp/NonRawPath";
         PrefabUtility.SaveAsPrefabAsset(go, TEST_MANIFEST_PATH);    // 保存预制体触发Import
         Object.DestroyImmediate(go);
-        Assert.IsFalse(result, "当DocsPath不存在时应当返回False");
+        Assert.IsFalse(result, "当RawPath不存在时应当返回False");
 
-        // 创建一个manifest，并设置一个正确的DocsPath
+        // 创建一个manifest，并设置一个正确的RawPath
         // 创建测试用的fui.bytes文件
-        var fuiBytesPath = XFile.PathJoin(TEST_DOCS_PATH, "TestManifest_fui.bytes");
+        var fuiBytesPath = XFile.PathJoin(TEST_RAW_PATH, "TestManifest_fui.bytes");
         XFile.SaveText(fuiBytesPath, "test content");
         go = new GameObject();
-        go.AddComponent<UIManifest>().DocsPath = TEST_DOCS_PATH;
+        go.AddComponent<UIManifest>().RawPath = TEST_RAW_PATH;
         PrefabUtility.SaveAsPrefabAsset(go, TEST_MANIFEST_PATH);
         Object.DestroyImmediate(go);
 
@@ -152,13 +152,13 @@ public class TestUIManifestEditor
     [Test]
     public void ImportWithDependency()
     {
-        if (!XFile.HasDirectory(PACKAGE1_DOCS_PATH)) XFile.CreateDirectory(PACKAGE1_DOCS_PATH);
-        if (!XFile.HasDirectory(PACKAGE2_DOCS_PATH)) XFile.CreateDirectory(PACKAGE2_DOCS_PATH);
+        if (!XFile.HasDirectory(PACKAGE1_RAW_PATH)) XFile.CreateDirectory(PACKAGE1_RAW_PATH);
+        if (!XFile.HasDirectory(PACKAGE2_RAW_PATH)) XFile.CreateDirectory(PACKAGE2_RAW_PATH);
         var packagePath = EFramework.Editor.XEditor.Utility.FindPackage().assetPath;
         var package1Path = XFile.PathJoin(packagePath, "Tests/Runtime/Resources/Package1_fui.bytes");
         var package2Path = XFile.PathJoin(packagePath, "Tests/Runtime/Resources/Package2_fui.bytes");
-        if (XFile.HasFile(package1Path)) XFile.CopyFile(package1Path, XFile.PathJoin(PACKAGE1_DOCS_PATH, "Package1_fui.bytes"));
-        if (XFile.HasFile(package2Path)) XFile.CopyFile(package2Path, XFile.PathJoin(PACKAGE2_DOCS_PATH, "Package2_fui.bytes"));
+        if (XFile.HasFile(package1Path)) XFile.CopyFile(package1Path, XFile.PathJoin(PACKAGE1_RAW_PATH, "Package1_fui.bytes"));
+        if (XFile.HasFile(package2Path)) XFile.CopyFile(package2Path, XFile.PathJoin(PACKAGE2_RAW_PATH, "Package2_fui.bytes"));
         var prefab1Dir = Path.GetDirectoryName(PACKAGE1_PATH);
         var prefab2Dir = Path.GetDirectoryName(PACKAGE2_PATH);
         if (!XFile.HasDirectory(prefab1Dir)) XFile.CreateDirectory(prefab1Dir);
@@ -171,7 +171,7 @@ public class TestUIManifestEditor
             // 创建Package1
             var go1 = new GameObject("Package1");
             var manifest1 = go1.AddComponent<UIManifest>();
-            manifest1.DocsPath = PACKAGE1_DOCS_PATH;
+            manifest1.RawPath = PACKAGE1_RAW_PATH;
             manifest1.PackageName = "Package1";
             manifest1.PackagePath = PACKAGE1_PATH.Replace(".prefab", "");
             PrefabUtility.SaveAsPrefabAsset(go1, PACKAGE1_PATH);
@@ -180,7 +180,7 @@ public class TestUIManifestEditor
             // 创建Package2
             var go2 = new GameObject("Package2");
             var manifest2 = go2.AddComponent<UIManifest>();
-            manifest2.DocsPath = PACKAGE2_DOCS_PATH;
+            manifest2.RawPath = PACKAGE2_RAW_PATH;
             manifest2.PackageName = "Package2";
             manifest2.PackagePath = PACKAGE2_PATH.Replace(".prefab", "");
             PrefabUtility.SaveAsPrefabAsset(go2, PACKAGE2_PATH);
@@ -209,8 +209,8 @@ public class TestUIManifestEditor
         {
             if (XFile.HasFile(PACKAGE1_PATH)) XFile.DeleteFile(PACKAGE1_PATH);
             if (XFile.HasFile(PACKAGE2_PATH)) XFile.DeleteFile(PACKAGE2_PATH);
-            if (XFile.HasDirectory(PACKAGE1_DOCS_PATH)) XFile.DeleteDirectory(PACKAGE1_DOCS_PATH);
-            if (XFile.HasDirectory(PACKAGE2_DOCS_PATH)) XFile.DeleteDirectory(PACKAGE2_DOCS_PATH);
+            if (XFile.HasDirectory(PACKAGE1_RAW_PATH)) XFile.DeleteDirectory(PACKAGE1_RAW_PATH);
+            if (XFile.HasDirectory(PACKAGE2_RAW_PATH)) XFile.DeleteDirectory(PACKAGE2_RAW_PATH);
             if (XFile.HasDirectory(prefab1Dir)) XFile.DeleteDirectory(prefab1Dir);
             if (XFile.HasDirectory(prefab2Dir)) XFile.DeleteDirectory(prefab2Dir);
         }

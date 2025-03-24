@@ -108,27 +108,27 @@ namespace EFramework.FairyGUI.Editor
                 if (string.IsNullOrEmpty(path)) XLog.Error("UIManifestEditor.Create: selection path is empty.");
                 else
                 {
-                    var docsPath = EditorUtility.SaveFolderPanel("Select Docs Path", XEnv.ProjectPath, null);
-                    if (string.IsNullOrEmpty(docsPath)) XLog.Warn("UIManifestEditor.Create: docs path is empty.");
+                    var rawPath = EditorUtility.SaveFolderPanel("Select Raw Path", XEnv.ProjectPath, null);
+                    if (string.IsNullOrEmpty(rawPath)) XLog.Warn("UIManifestEditor.Create: raw path is empty.");
                     else
                     {
-                        docsPath = XFile.NormalizePath(Path.GetRelativePath(XEnv.ProjectPath, docsPath));
-                        if (!XFile.HasDirectory(docsPath)) XLog.Error("UIManifestEditor.Create: docs path doesn't exist: {0}", docsPath);
+                        rawPath = XFile.NormalizePath(Path.GetRelativePath(XEnv.ProjectPath, rawPath));
+                        if (!XFile.HasDirectory(rawPath)) XLog.Error("UIManifestEditor.Create: raw path doesn't exist: {0}", rawPath);
                         else
                         {
-                            var fs = Directory.GetFiles(docsPath);
-                            if (!Directory.GetFiles(docsPath).Any(file => Path.GetFileName(file).EndsWith("_fui.bytes")))
+                            var fs = Directory.GetFiles(rawPath);
+                            if (!Directory.GetFiles(rawPath).Any(file => Path.GetFileName(file).EndsWith("_fui.bytes")))
                             {
-                                XLog.Error("UIManifestEditor.Create: mani desc like xxx_fui.bytes was not found: {0}", docsPath);
+                                XLog.Error("UIManifestEditor.Create: mani desc like xxx_fui.bytes was not found: {0}", rawPath);
                             }
                             else
                             {
-                                var maniPath = AssetDatabase.CreateFolder(path, Path.GetFileName(docsPath));
+                                var maniPath = AssetDatabase.CreateFolder(path, Path.GetFileName(rawPath));
                                 if (string.IsNullOrEmpty(maniPath)) XLog.Error("UIManifestEditor.Create: create manifest folder error: {0}", maniPath);
                                 else
                                 {
                                     maniPath = AssetDatabase.GUIDToAssetPath(maniPath);
-                                    var asset = Create(XFile.PathJoin(maniPath, Path.GetFileName(maniPath) + ".prefab"), docsPath);
+                                    var asset = Create(XFile.PathJoin(maniPath, Path.GetFileName(maniPath) + ".prefab"), rawPath);
                                     if (asset) Selection.activeObject = asset;
                                 }
                             }
@@ -142,12 +142,12 @@ namespace EFramework.FairyGUI.Editor
         /// 创建 UIManifest 预制体资源。
         /// </summary>
         /// <param name="maniPath">UIManifest 预制体的保存路径</param>
-        /// <param name="docsPath">FairyGUI 导出文档的路径</param>
+        /// <param name="rawPath">FairyGUI 导出素材的路径</param>
         /// <returns>创建的 UIManifest 资源对象</returns>
-        public static Object Create(string maniPath, string docsPath)
+        public static Object Create(string maniPath, string rawPath)
         {
             var go = new GameObject();
-            go.AddComponent<UIManifest>().DocsPath = docsPath;
+            go.AddComponent<UIManifest>().RawPath = rawPath;
 
             var asset = PrefabUtility.SaveAsPrefabAsset(go, maniPath);
             Object.DestroyImmediate(go);
@@ -204,9 +204,9 @@ namespace EFramework.FairyGUI.Editor
                 return false;
             }
 
-            if (!XFile.HasDirectory(mani.DocsPath))
+            if (!XFile.HasDirectory(mani.RawPath))
             {
-                XLog.Error("UIManifestEditor.Import: docs path doesn't exist: {0}", mani.DocsPath);
+                XLog.Error("UIManifestEditor.Import: raw path doesn't exist: {0}", mani.RawPath);
                 return false;
             }
 
@@ -228,7 +228,7 @@ namespace EFramework.FairyGUI.Editor
                 XFile.DeleteFile(of);
             }
 
-            XFile.CopyDirectory(mani.DocsPath, maniPath);
+            XFile.CopyDirectory(mani.RawPath, maniPath);
             AssetDatabase.Refresh();
             var nfiles = Directory.GetFiles(maniPath);
 
@@ -316,7 +316,7 @@ namespace EFramework.FairyGUI.Editor
                 AssetDatabase.Refresh();
                 if (icon) EditorGUIUtility.SetIconForObject(go, icon);
             }
-            XLog.Debug("UIManifestEditor.Import: import <a href=\"file:///{0}\">{1}</a> from <a href=\"file:///{2}\">{3}</a> succeed.", Path.GetFullPath(path), path, Path.GetFullPath(mani.DocsPath), mani.DocsPath);
+            XLog.Debug("UIManifestEditor.Import: import <a href=\"file:///{0}\">{1}</a> from <a href=\"file:///{2}\">{3}</a> succeed.", Path.GetFullPath(path), path, Path.GetFullPath(mani.RawPath), mani.RawPath);
             return true;
         }
     }

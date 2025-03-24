@@ -37,9 +37,9 @@ namespace EFramework.FairyGUI
     public class UIManifest : MonoBehaviour
     {
         /// <summary>
-        /// FairyGUI 导出文档的路径，用于导入和更新 UI 资源。
+        /// FairyGUI 导出素材的路径，用于导入和更新 UI 资源清单。
         /// </summary>
-        public string DocsPath;
+        public string RawPath;
 
         /// <summary>
         /// UI 包的名称，与 FairyGUI 中定义的包名一致。

@@ -7,7 +7,7 @@ UIManifest 是 FairyGUI 的 UI 资源清单组件，用于管理 UI 包资源及
 
 ## 功能特性
 
-- 存储包资源信息：记录 FairyGUI 导出文档路径、包名称和路径，便于运行时加载
+- 存储包资源信息：记录 FairyGUI 导出素材路径、包名称和路径，便于运行时加载
 - 管理依赖关系：存储和管理 UI 包之间的依赖引用，确保资源按正确顺序加载
 - 自动资源处理：支持通过编辑器工具自动导入和更新 UI 资源
 - 与 UICanvas 集成：为 UICanvas 提供资源引用和依赖管理支持
@@ -37,8 +37,8 @@ UIManifest 的主要属性：
 // 获取现有的 UIManifest
 UIManifest manifest = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/YourUI/Package.prefab").GetComponent<UIManifest>();
 
-// 设置 FairyGUI 导出路径
-manifest.DocsPath = "Assets/YourUI/ExportedDocs";
+// 设置 FairyGUI 导出素材的路径
+manifest.RawPath = "Assets/YourUI/ExportedDocs";
 
 // 包名称和路径通常由导入过程自动设置
 // 但也可以手动设置
@@ -99,7 +99,7 @@ canvas.packageMani = manifest;
 ### 1. 导入失败
 
 如果 UIManifest 导入失败，请检查：
-- DocsPath 是否正确指向 FairyGUI 的导出目录
+- RawPath 是否正确指向 FairyGUI 的导出目录
 - 导出目录中是否包含有效的 FairyGUI 文件（如 _fui.bytes 文件）
 - 是否有足够的权限访问目录和文件
 
@@ -113,7 +113,7 @@ canvas.packageMani = manifest;
 ### 3. 资源更新问题
 
 更新 FairyGUI 资源后：
-- 确保重新导出 FairyGUI 文件到指定的 DocsPath
+- 确保重新导出 FairyGUI 文件到指定的 RawPath
 - 在 Unity 中重新导入 UIManifest（可通过右键 UIManifest 并选择 "Reimport"）
 - 如果自动导入没有触发，可以手动调用 UIManifestEditor.Import() 方法
 
