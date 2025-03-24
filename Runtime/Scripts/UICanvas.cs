@@ -10,30 +10,47 @@ using EFramework.Utility;
 namespace EFramework.FairyGUI
 {
     /// <summary>
-    /// FairyGUI 的 UI 画布组件，提供包资源的自动加载和依赖管理功能。
+    /// UICanvas 拓展了 UIPanel 组件的功能，提供包资源的自动加载和依赖管理功能。
     /// </summary>
     /// <remarks>
     /// <code>
     /// 功能特性
-    /// - 自动加载指定的 FairyGUI 包资源
-    /// - 支持包依赖关系的处理
-    /// - 提供组件索引功能，可通过名称获取子对象
-    /// - 运行时和编辑器模式下的智能处理
+    /// - 依赖关系管理：自动处理包之间的依赖关系，确保资源按正确的顺序加载
+    /// - 组件快速索引：可通过名称或路径快速获取子对象，简化对象查找过程
     /// 
     /// 使用手册
-    /// 1. 基本用法
+    /// 1. 挂载组件
     /// 
-    /// 1.1 创建 UI 画布
+    /// 通过编辑器挂载组件：
     /// 
-    ///     在场景中创建一个 GameObject，添加 UICanvas 组件
-    ///     设置对应的 packageName 和 packagePath
-    ///     指定 packageMani 引用对应的 UIManifest 预制体
+    ///     点击 AddComponentMenu 按钮
+    ///     选择 "FairyGUI → UI Canvas"
+    ///     在 Inspector 中设置相关属性
     /// 
-    /// 1.2 自定义加载逻辑
+    /// 2. 依赖加载
     /// 
-    ///     可通过设置静态 Loader 委托来自定义包资源的加载逻辑
+    /// 允许自定义包资源依赖的加载：
     /// 
+    ///     // 设置全局的自定义加载器
+    ///     UICanvas.Loader = (canvas) => {
+    ///         // 自定义加载逻辑
+    ///         Debug.Log($"正在加载包：{canvas.packageName}");
+    ///     };
+    /// 
+    /// 3. 快速索引
+    /// 
+    /// 通过名称或路径获取 UI 组件：
+    /// 
+    ///     // 获取按钮组件
+    ///     GButton button = canvas.Index&lt;GButton&gt;("panel.loginButton");
+    ///     
+    ///     // 获取文本组件
+    ///     GTextField text = canvas.Index&lt;GTextField&gt;("panel.welcomeText");
+    ///     
+    ///     // 获取列表组件
+    ///     GList list = canvas.Index&lt;GList&gt;("panel.itemList");
     /// </code>
+    /// 更多信息请参考模块文档。
     /// </remarks>
     [AddComponentMenu("FairyGUI/UI Canvas")]
     public class UICanvas : UIPanel, XComp.IIndexable

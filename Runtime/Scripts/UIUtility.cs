@@ -8,37 +8,73 @@ using EFramework.Utility;
 namespace EFramework.FairyGUI
 {
     /// <summary>
-    /// FairyGUI 工具集，提供 UI 组件操作的扩展方法。
+    /// UIUtility 是一个 FairyGUI 的工具函数集，提供了一系列简化 UI 组件操作的扩展方法。
     /// </summary>
     /// <remarks>
     /// <code>
     /// 功能特性
-    /// - 提供 UICanvas 和 GComponent 的快速索引功能
-    /// - 提供设置 UI 组件显示状态的便捷方法
-    /// - 简化 FairyGUI 组件的常用操作
+    /// - 快速索引功能：通过名称或路径快速获取 UI 组件的子对象
+    /// - 显示状态控制：提供简便的方法控制 UI 组件的显示和隐藏
+    /// - 扩展方法支持：采用扩展方法设计，函数调用更为直观
     /// 
     /// 使用手册
     /// 1. 索引操作
     /// 
     /// 1.1 UICanvas 索引
     /// 
-    ///     var button = canvas.Index<GButton>("panel.button");
+    ///     // 获取 UICanvas
+    ///     var canvas = FindObjectOfType&lt;UICanvas&gt;();
+    ///     
+    ///     // 通过路径获取按钮组件
+    ///     var loginBtn = canvas.Index&lt;GButton&gt;("loginPanel.loginBtn");
     ///     
     /// 1.2 GComponent 索引
     /// 
-    ///     var text = component.Index<GTextField>("text");
+    ///     // 获取 GComponent
+    ///     var panel = canvas.ui.GetChild("mainPanel").asCom;
+    ///     
+    ///     // 通过名称获取按钮
+    ///     var okBtn = panel.Index&lt;GButton&gt;("okBtn");
     /// 
-    /// 2. 显示状态设置
+    /// 2. 状态控制
     /// 
     /// 2.1 设置组件显示状态
     /// 
-    ///     obj.SetActiveState(false); // 隐藏组件
+    ///     // 获取 GObject
+    ///     var obj = panel.GetChild("notification");
     ///     
-    /// 2.2 设置子组件显示状态
+    ///     // 显示组件
+    ///     obj.SetActiveState(true);
+    ///     
+    ///     // 隐藏组件
+    ///     obj.SetActiveState(false);
+    ///     
+    ///     // 链式调用
+    ///     canvas.Index&lt;GButton&gt;("loginBtn")?.SetActiveState(true);
+    ///     
+    /// 2.2 设置容器显示状态
     /// 
-    ///     component.SetActiveState("child.button", true); // 显示指定路径的子组件
+    ///     // 获取容器
+    ///     var container = panel.GetChild("container").asCom;
+    ///     
+    ///     // 显示整个容器
+    ///     container.SetActiveState(true);
+    ///     
+    ///     // 隐藏整个容器
+    ///     container.SetActiveState(false);
+    ///     
+    /// 2.3 设置子对象显示状态
     /// 
+    ///     // 获取容器
+    ///     var panel = canvas.ui.GetChild("mainPanel").asCom;
+    ///     
+    ///     // 通过路径显示子对象
+    ///     panel.SetActiveState("header.logo", true);
+    ///     
+    ///     // 通过路径隐藏子对象
+    ///     panel.SetActiveState("footer.copyright", false);
     /// </code>
+    /// 更多信息请参考模块文档。
     /// </remarks>
     public static class UIUtility
     {

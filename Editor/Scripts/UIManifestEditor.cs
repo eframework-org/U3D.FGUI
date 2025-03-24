@@ -25,22 +25,8 @@ namespace EFramework.FairyGUI.Editor
     /// - 提供 UIManifest 资源的创建与导入功能
     /// - 自动处理 UIManifest 资源的依赖关系
     /// - 支持从 FairyGUI 导出的文档中创建 UIManifest
-    /// 
-    /// 使用手册
-    /// 1. 创建 UIManifest
-    /// 
-    /// 1.1 从资源菜单创建
-    /// 
-    ///     在 Project 窗口中选择目标文件夹，右键菜单选择 "Create/FairyGUI/UI Manifest"
-    ///     选择包含 FairyGUI 导出文件的文档目录，系统将自动创建 UIManifest 预制体
-    /// 
-    /// 2. 导入 UIManifest
-    /// 
-    /// 2.1 自动导入
-    /// 
-    ///     当 UIManifest 预制体被导入或移动时，系统将自动处理其依赖关系
-    /// 
     /// </code>
+    /// 更多信息请参考模块文档。
     /// </remarks>
     public class UIManifestEditor
     {

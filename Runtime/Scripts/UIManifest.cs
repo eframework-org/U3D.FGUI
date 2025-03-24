@@ -8,30 +8,32 @@ using UnityEngine;
 namespace EFramework.FairyGUI
 {
     /// <summary>
-    /// FairyGUI 的 UI 资源清单组件，管理 UI 包资源及其依赖关系。
+    /// UIManifest 实现了 FairyGUI 导出素材的清单管理功能，用于控制 UI 包资源及其依赖关系。
     /// </summary>
     /// <remarks>
     /// <code>
     /// 功能特性
-    /// - 存储 FairyGUI 导出文档的路径信息
-    /// - 记录 UI 包名称和路径
-    /// - 管理 UI 包的依赖关系
-    /// - 与 UICanvas 配合使用，支持运行时资源加载
+    /// - 存储素材清单：记录 UI 包的名称、路径、素材列表等信息
+    /// - 依赖关系管理：存储和管理 UI 包之间的依赖引用
+    /// - 自动导入流程：监听资源导入事件触发自动化导入流程
     /// 
     /// 使用手册
-    /// 1. 基本用法
+    /// 1. 创建清单
     /// 
-    /// 1.1 创建 UI 资源清单
+    /// 通过编辑器创建清单：
     /// 
-    ///     在 Project 窗口中选择目标文件夹，右键菜单选择 "Create/FairyGUI/UI Manifest"
-    ///     选择包含 FairyGUI 导出文件的文档目录，系统将自动创建 UIManifest 预制体
+    ///     1. 在 Project 窗口中选择目标文件夹
+    ///     2. 右键 Create/FairyGUI/UI Manifest
+    ///     3. 选择 FairyGUI 导出文件的素材目录
     /// 
-    /// 1.2 配合 UICanvas 使用
+    /// 2. 资源导入
     /// 
-    ///     在 UICanvas 组件中引用对应的 UIManifest 预制体
-    ///     系统将自动加载 UI 包及其依赖
+    /// 支持自动和手动两种方式导入清单：
     /// 
+    ///     1. 监听资源导入事件触发自动化导入流程
+    ///     2. 右键 UIManifest 资源并 Reimport
     /// </code>
+    /// 更多信息请参考模块文档。
     /// </remarks>
     [AddComponentMenu("FairyGUI/UI Manifest")]
     public class UIManifest : MonoBehaviour

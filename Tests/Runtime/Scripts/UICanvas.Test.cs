@@ -4,21 +4,21 @@
 
 #if UNITY_INCLUDE_TESTS
 using NUnit.Framework;
-using EFramework.FairyGUI;
 using UnityEngine;
 using FairyGUI;
 using System.Collections.Generic;
+using EFramework.FairyGUI;
 
 public class TestUICanvas
 {
-    [TestCase(true, "通过UIPanel")]
-    [TestCase(false, "不通过UIPanel")]
-    public void Index(bool isUIPanel, string _)
+    [TestCase(true, TestName = "通过UIPanel")]
+    [TestCase(false, TestName = "不通过UIPanel")]
+    public void Index(bool byPanel)
     {
-        object result = null;
-        UICanvas canvas = null;
         var rootObj = new GameObject("TestCanvas");
-        if (isUIPanel)
+        object result;
+        UICanvas canvas;
+        if (byPanel)
         {
             canvas = rootObj.AddComponent<UICanvas>();
 
@@ -33,7 +33,6 @@ public class TestUICanvas
         }
         else
         {
-
             canvas = rootObj.AddComponent<UICanvas>();
             // 创建测试子对象
             var testChild1 = new GameObject("testChild1");
@@ -59,9 +58,9 @@ public class TestUICanvas
         GameObject.DestroyImmediate(canvas.gameObject);
     }
 
-    [TestCase(true, "有依赖关系")]
-    [TestCase(false, "没有依赖关系")]
-    public void Awake(bool hasDependency, string _)
+    [TestCase(true, TestName = "有依赖关系")]
+    [TestCase(false, TestName = "没有依赖关系")]
+    public void Awake(bool hasDependency)
     {
         // 创建测试对象
         var canvasObj = new GameObject("TestCanvas");

@@ -19,15 +19,8 @@ namespace EFramework.FairyGUI.Editor
     /// - 为 UICanvas 预制体在项目窗口中显示自定义图标
     /// - 自动处理资源导入和移动事件
     /// - 支持在项目视图中快速识别 UICanvas 对象
-    /// 
-    /// 使用手册
-    /// 1. 编辑器集成
-    /// 
-    /// 1.1 自定义图标
-    /// 
-    ///     UICanvas 预制体在项目窗口中会显示自定义图标，无需手动配置
-    /// 
     /// </code>
+    /// 更多信息请参考模块文档。
     /// </remarks>
     public class UICanvasEditor
     {
