@@ -20,6 +20,7 @@ UIManifest 实现了 FairyGUI 导出素材的清单管理功能，用于控制 U
 1. 在 `Project` 窗口中选择目标文件夹
 2. 右键 `Create/FairyGUI/UI Manifest`
 3. 选择 `FairyGUI` 导出文件的素材目录
+4. 编辑器将自动创建 `UIManifest` 预制体
 
 ### 2. 资源导入
 
