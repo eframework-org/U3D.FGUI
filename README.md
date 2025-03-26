@@ -1,9 +1,9 @@
-# U3D.FGUI
+# EFramework FairyGUI for Unity
 
 [![Version](https://img.shields.io/npm/v/org.eframework.u3d.fgui)](https://www.npmjs.com/package/org.eframework.u3d.fgui)
 [![Downloads](https://img.shields.io/npm/dm/org.eframework.u3d.fgui)](https://www.npmjs.com/package/org.eframework.u3d.fgui)
 
-U3D.FGUI 是一个基于 FairyGUI 的拓展模块，提供了画布组件、资源包管理等核心功能，支持自定义加载器、自动处理包依赖关系以及编辑器扩展等特性。
+EFramework FairyGUI for Unity 是一个基于 FairyGUI 的拓展模块，提供了画布组件、资源包管理等核心功能，支持自定义加载器、自动处理包依赖关系以及编辑器扩展等特性。
 
 ## 功能特性
 
