@@ -298,9 +298,12 @@ namespace EFramework.FairyGUI.Editor
 
             if (dirty)
             {
-                var go = PrefabUtility.SavePrefabAsset(mani.gameObject);
-                AssetDatabase.Refresh();
-                if (icon) EditorGUIUtility.SetIconForObject(go, icon);
+                EditorApplication.delayCall += () =>
+                {
+                    var go = PrefabUtility.SavePrefabAsset(mani.gameObject);
+                    AssetDatabase.Refresh();
+                    if (icon) EditorGUIUtility.SetIconForObject(go, icon);
+                };
             }
             XLog.Debug("UIManifestEditor.Import: import <a href=\"file:///{0}\">{1}</a> from <a href=\"file:///{2}\">{3}</a> succeed.", Path.GetFullPath(path), path, Path.GetFullPath(mani.RawPath), mani.RawPath);
             return true;
