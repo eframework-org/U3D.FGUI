@@ -2,7 +2,7 @@
   "name": "org.eframework.u3d.fgui",
   "displayName": "EFramework FairyGUI for Unity",
   "description": "EFramework FairyGUI for Unity 是一个基于 FairyGUI 的拓展模块，提供了画布组件、资源包管理等核心功能，支持自定义加载器、自动处理包依赖关系以及编辑器扩展等特性。",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "unity": "2021.3",
   "license": "MIT",
   "author": {
