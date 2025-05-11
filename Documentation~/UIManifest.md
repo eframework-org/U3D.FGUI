@@ -2,6 +2,7 @@
 
 [![Version](https://img.shields.io/npm/v/org.eframework.u3d.fgui)](https://www.npmjs.com/package/org.eframework.u3d.fgui)
 [![Downloads](https://img.shields.io/npm/dm/org.eframework.u3d.fgui)](https://www.npmjs.com/package/org.eframework.u3d.fgui)
+[![DeepWiki](https://img.shields.io/badge/DeepWiki-Explore-blue)](https://deepwiki.com/eframework-org/U3D.FGUI)
 
 UIManifest 实现了 FairyGUI 导出素材的清单管理功能，用于控制 UI 包资源及其依赖关系。
 

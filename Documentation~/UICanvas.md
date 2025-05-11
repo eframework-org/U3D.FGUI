@@ -2,6 +2,7 @@
 
 [![Version](https://img.shields.io/npm/v/org.eframework.u3d.fgui)](https://www.npmjs.com/package/org.eframework.u3d.fgui)
 [![Downloads](https://img.shields.io/npm/dm/org.eframework.u3d.fgui)](https://www.npmjs.com/package/org.eframework.u3d.fgui)
+[![DeepWiki](https://img.shields.io/badge/DeepWiki-Explore-blue)](https://deepwiki.com/eframework-org/U3D.FGUI)
 
 UICanvas 拓展了 UIPanel 组件的功能，提供包资源的自动加载和依赖管理功能。
 
