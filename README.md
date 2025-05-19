@@ -20,4 +20,4 @@ EFramework FairyGUI for Unity 是一个基于 FairyGUI 的拓展模块，提供�
 
 - [更新记录](CHANGELOG.md)
 - [贡献指南](CONTRIBUTING.md)
-- [许可证](LICENSE.md) 
+- [许可证](LICENSE.md)
