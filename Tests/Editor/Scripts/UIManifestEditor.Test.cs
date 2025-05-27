@@ -52,6 +52,7 @@ public class TestUIManifestEditor
             kvp.Value.Dispose();
         }
         UIManifestEditor.watchers.Clear();
+        UIManifestEditor.skips.Clear();
     }
 
     [TearDown]
@@ -68,6 +69,7 @@ public class TestUIManifestEditor
             kvp.Value.Dispose();
         }
         UIManifestEditor.watchers.Clear();
+        UIManifestEditor.skips.Clear();
     }
 
     [Test]
@@ -237,7 +239,11 @@ public class TestUIManifestEditor
         XFile.SaveText(rawBytes, "test content3");
         UIManifestEditor.watchers.TryGetValue(TestRawPath, out var watcher);
         Assert.NotNull(watcher, "文件监听实例不应当为空。");
-        watcher.GetType().GetMethod("OnChanged", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(watcher, new object[] { null });
+        watcher.GetType().GetMethod("OnChanged", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(watcher, new object[] { new FileSystemEventArgs(
+            WatcherChangeTypes.Changed,
+            TestRawPath,
+            Path.GetFileName(rawBytes)
+        )});
         Assert.IsTrue(XFile.OpenText(rawBytes).Equals(XFile.OpenText(dstBytes)), "文件监听回调后应当使用新的描述文件内容。");
     }
 }
