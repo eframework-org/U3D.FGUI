@@ -28,7 +28,7 @@ namespace EFramework.FairyGUI.Editor
     /// </code>
     /// 更多信息请参考模块文档。
     /// </remarks>
-    public class UIManifestEditor
+    public class UIManifestEditor: XEditor.Event.Internal.OnEditorInit
     {
         internal static Texture2D icon;
 
@@ -64,7 +64,7 @@ namespace EFramework.FairyGUI.Editor
         /// 收集项目中所有 UIManifest 资源，用于依赖关系处理。
         /// </summary>
         /// <param name="path">要添加到收集列表中的 UIManifest 路径</param>
-        internal static void Collect(string path)
+        internal static void Collect()
         {
             if (manifests == null)
             {
@@ -78,6 +78,11 @@ namespace EFramework.FairyGUI.Editor
                 }
                 if (manifests.Count > 0) XLog.Debug("UIManifestEditor.Collect: find {0} manifest(s).", manifests.Count);
             }
+        }
+        
+        internal static void Collect(string path)
+        {
+            Collect();
             if (!manifests.Contains(path)) manifests.Add(path);
         }
 
@@ -170,6 +175,49 @@ namespace EFramework.FairyGUI.Editor
                     {
                         Import(path);
                     }
+                }
+            }
+        }
+        
+        public int Priority { get; }
+        public bool Singleton { get; }
+        void XEditor.Event.Internal.OnEditorInit.Process(params object[] args)
+        {
+            Collect();
+            foreach (var asset in manifests)
+            {
+                var mani = AssetDatabase.LoadAssetAtPath<UIManifest>(asset);
+                if (mani)
+                {
+                    var docAtlasPath = XFile.PathJoin(mani.RawPath, mani.PackageName + "_fui.bytes");
+                    if (XFile.HasFile(docAtlasPath))
+                    {
+                        var rA = XFile.FileMD5(mani.PackagePath + "_fui.bytes");
+                        var dA = XFile.FileMD5(XFile.PathJoin(mani.RawPath, mani.PackageName + "_fui.bytes"));
+                        if (!rA.Equals(dA)) AssetDatabase.ImportAsset(asset, ImportAssetOptions.ForceUpdate);
+                    }
+                    else XLog.Alert("UIManifestEditor.OnEditorInit: {0}Docs atlas don't exist,please check", docAtlasPath);
+                }
+            }
+        }
+        
+        /// <summary>
+        /// 用于监听图集更新
+        /// </summary>
+        [InitializeOnLoadMethod]
+        public static void AtlasListener()
+        {
+            Collect();
+            foreach (var asset in manifests)
+            {
+                var mani = AssetDatabase.LoadAssetAtPath<UIManifest>(asset);
+                if (mani)
+                {
+                    var watcher = new FileSystemWatcher(mani.RawPath, "*.bytes");
+                    watcher.IncludeSubdirectories = true;
+                    watcher.EnableRaisingEvents = true;
+                    watcher.NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite | NotifyFilters.Size;
+                    watcher.Changed += (sender, args) => XLoom.RunInMain((() => AssetDatabase.ImportAsset(asset, ImportAssetOptions.ForceUpdate)));
                 }
             }
         }
@@ -298,12 +346,9 @@ namespace EFramework.FairyGUI.Editor
 
             if (dirty)
             {
-                EditorApplication.delayCall += () =>
-                {
-                    var go = PrefabUtility.SavePrefabAsset(mani.gameObject);
-                    AssetDatabase.Refresh();
-                    if (icon) EditorGUIUtility.SetIconForObject(go, icon);
-                };
+                var go = PrefabUtility.SavePrefabAsset(mani.gameObject);
+                AssetDatabase.Refresh();
+                if (icon) EditorGUIUtility.SetIconForObject(go, icon);
             }
             XLog.Debug("UIManifestEditor.Import: import <a href=\"file:///{0}\">{1}</a> from <a href=\"file:///{2}\">{3}</a> succeed.", Path.GetFullPath(path), path, Path.GetFullPath(mani.RawPath), mani.RawPath);
             return true;

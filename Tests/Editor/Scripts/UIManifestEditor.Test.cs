@@ -13,6 +13,7 @@ using System.Text.RegularExpressions;
 using EFramework.Utility;
 using System.IO;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 public class TestUIManifestEditor
 {
@@ -214,6 +215,28 @@ public class TestUIManifestEditor
 
         var result = UIManifestEditor.Import(TestPackage1);
         Assert.IsTrue(result, "导入应该成功，尽管有循环依赖");
+    }
+    
+    [Test]
+    public async Task AtlasListener()
+    {
+        // 创建一个manifest，并设置一个正确的RawPath
+        // 创建测试用的fui.bytes文件
+        var fuiBytesPath = XFile.PathJoin(TestRawPath, "TestManifest_fui.bytes");
+        XFile.SaveText(fuiBytesPath, "test content");
+        var go = new GameObject();
+        go.AddComponent<UIManifest>().RawPath = TestRawPath;
+        PrefabUtility.SaveAsPrefabAsset(go, TestManifest);
+        Object.DestroyImmediate(go);
+
+        //重置监听
+        UIManifestEditor.AtlasListener();
+        var prefabDir = Path.GetDirectoryName(TestManifest);
+        XFile.SaveText(fuiBytesPath, "test content2");
+        //需等待监听回调执行后，相应资源导入
+        await Task.Delay(1000);
+        var copiedFuiPath = XFile.PathJoin(prefabDir, "TestManifest_fui.bytes");
+        Assert.IsTrue(XFile.OpenText(fuiBytesPath).Equals(XFile.OpenText(copiedFuiPath)),  "文件应该被监听并复制到预制体目录");
     }
 }
 #endif
