@@ -9,7 +9,6 @@ using UnityEngine;
 using UnityEngine.TestTools;
 using System.IO;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using EFramework.Utility;
 using EFramework.Editor;
