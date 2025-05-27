@@ -178,8 +178,9 @@ public class TestUIManifestEditor
         if (!XFile.HasDirectory(prefab1Dir)) XFile.CreateDirectory(prefab1Dir);
         if (!XFile.HasDirectory(prefab2Dir)) XFile.CreateDirectory(prefab2Dir);
 
-        LogAssert.Expect(LogType.Error, new Regex(@"UIManifestEditor\.Import: manifest: .* dependency:.* was not found, please create it and import again.*"));
-        LogAssert.Expect(LogType.Log, new Regex(@"UIManifestEditor\.Import: manifest: .* dependency: .* has cycle reference, please check it.*"));
+        LogAssert.Expect(LogType.Error, new Regex(@"UIManifestEditor\.Import: manifest: .* dependency: .* was not found, please create it and import again\."));
+        LogAssert.Expect(LogType.Log, new Regex(@"UIManifestEditor\.Import: manifest: .* dependency: .* has cycle reference, please check it\."));
+
         // 创建Package1
         var go1 = new GameObject("Package1");
         var manifest1 = go1.AddComponent<UIManifest>();
