@@ -4,16 +4,18 @@
 
 #if UNITY_INCLUDE_TESTS
 using NUnit.Framework;
-using EFramework.FairyGUI.Editor;
 using UnityEditor;
 using UnityEngine;
-using EFramework.FairyGUI;
 using UnityEngine.TestTools;
-using System.Text.RegularExpressions;
-using EFramework.Utility;
 using System.IO;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
+using EFramework.Utility;
+using EFramework.Editor;
+using EFramework.FairyGUI;
+using EFramework.FairyGUI.Editor;
+using System.Reflection;
 
 public class TestUIManifestEditor
 {
@@ -43,6 +45,14 @@ public class TestUIManifestEditor
         if (!XFile.HasDirectory(TestRawPath)) XFile.CreateDirectory(TestRawPath);
         var prefabDir = Path.GetDirectoryName(TestManifest);
         if (!XFile.HasDirectory(prefabDir)) XFile.CreateDirectory(prefabDir);
+
+        AssetDatabase.Refresh();
+        UIManifestEditor.manifests = null;
+        foreach (var kvp in UIManifestEditor.watchers)
+        {
+            kvp.Value.Dispose();
+        }
+        UIManifestEditor.watchers.Clear();
     }
 
     [TearDown]
@@ -51,22 +61,14 @@ public class TestUIManifestEditor
         if (XFile.HasDirectory(TestRawPath)) XFile.DeleteDirectory(TestRawPath);
         var prefabDir = Path.GetDirectoryName(TestManifest);
         if (XFile.HasDirectory(prefabDir)) XFile.DeleteDirectory(prefabDir);
-    }
 
-    [Test]
-    public void OnInit()
-    {
-        // Arrange
-        UIManifestEditor.icon = null;
-        var originCount = EditorApplication.projectWindowItemOnGUI == null ? 0 : EditorApplication.projectWindowItemOnGUI.GetInvocationList()?.Length ?? 0;
-
-        // Act
-        UIManifestEditor.OnInit();
-
-        // Assert
-        Assert.IsNotNull(UIManifestEditor.icon, "icon应当被加载到");
-        var addedCount = EditorApplication.projectWindowItemOnGUI.GetInvocationList().Length;
-        Assert.AreEqual(originCount + 1, addedCount, "回调函数应当被注册");
+        AssetDatabase.Refresh();
+        UIManifestEditor.manifests = null;
+        foreach (var kvp in UIManifestEditor.watchers)
+        {
+            kvp.Value.Dispose();
+        }
+        UIManifestEditor.watchers.Clear();
     }
 
     [Test]
@@ -167,7 +169,7 @@ public class TestUIManifestEditor
     {
         if (!XFile.HasDirectory(TestPackageRaw1)) XFile.CreateDirectory(TestPackageRaw1);
         if (!XFile.HasDirectory(TestPackageRaw2)) XFile.CreateDirectory(TestPackageRaw2);
-        var packagePath = EFramework.Editor.XEditor.Utility.FindPackage().assetPath;
+        var packagePath = XEditor.Utility.FindPackage().assetPath;
         var package1Path = XFile.PathJoin(packagePath, "Tests/Runtime/Resources/Package1_fui.bytes");
         var package2Path = XFile.PathJoin(packagePath, "Tests/Runtime/Resources/Package2_fui.bytes");
         if (XFile.HasFile(package1Path)) XFile.CopyFile(package1Path, XFile.PathJoin(TestPackageRaw1, "Package1_fui.bytes"));
@@ -216,27 +218,27 @@ public class TestUIManifestEditor
         var result = UIManifestEditor.Import(TestPackage1);
         Assert.IsTrue(result, "导入应该成功，尽管有循环依赖");
     }
-    
-    [Test]
-    public async Task AtlasListener()
-    {
-        // 创建一个manifest，并设置一个正确的RawPath
-        // 创建测试用的fui.bytes文件
-        var fuiBytesPath = XFile.PathJoin(TestRawPath, "TestManifest_fui.bytes");
-        XFile.SaveText(fuiBytesPath, "test content");
-        var go = new GameObject();
-        go.AddComponent<UIManifest>().RawPath = TestRawPath;
-        PrefabUtility.SaveAsPrefabAsset(go, TestManifest);
-        Object.DestroyImmediate(go);
 
-        //重置监听
-        UIManifestEditor.AtlasListener();
-        var prefabDir = Path.GetDirectoryName(TestManifest);
-        XFile.SaveText(fuiBytesPath, "test content2");
-        //需等待监听回调执行后，相应资源导入
-        await Task.Delay(1000);
-        var copiedFuiPath = XFile.PathJoin(prefabDir, "TestManifest_fui.bytes");
-        Assert.IsTrue(XFile.OpenText(fuiBytesPath).Equals(XFile.OpenText(copiedFuiPath)),  "文件应该被监听并复制到预制体目录");
+    [Test]
+    public void Watch()
+    {
+        // Arrange：准备测试数据
+        var rawBytes = XFile.PathJoin(TestRawPath, "TestManifest_fui.bytes");
+        var dstBytes = XFile.PathJoin(Path.GetDirectoryName(TestManifest), "TestManifest_fui.bytes");
+        XFile.SaveText(rawBytes, "test content");
+        UIManifestEditor.Create(TestManifest, TestRawPath);
+
+        // Act（修改文件） + Assert（文件校验）
+        XFile.SaveText(rawBytes, "test content2");
+        (new UIManifestEditor.Listener() as XEditor.Event.Internal.OnEditorInit).Process(null);
+        Assert.IsTrue(XFile.OpenText(rawBytes).Equals(XFile.OpenText(dstBytes)), "文件校验执行后应当使用新的描述文件内容。");
+
+        // Act（修改文件） + Assert（文件监听）
+        XFile.SaveText(rawBytes, "test content3");
+        UIManifestEditor.watchers.TryGetValue(TestRawPath, out var watcher);
+        Assert.NotNull(watcher, "文件监听实例不应当为空。");
+        watcher.GetType().GetMethod("OnChanged", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(watcher, new object[] { null });
+        Assert.IsTrue(XFile.OpenText(rawBytes).Equals(XFile.OpenText(dstBytes)), "文件监听回调后应当使用新的描述文件内容。");
     }
 }
 #endif

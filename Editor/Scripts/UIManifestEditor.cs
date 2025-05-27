@@ -9,7 +9,6 @@ using UnityEngine;
 using UnityEditor;
 using FairyGUI;
 using FairyGUIEditor;
-using EFramework.FairyGUI;
 using EFramework.Utility;
 using EFramework.Editor;
 
@@ -28,22 +27,22 @@ namespace EFramework.FairyGUI.Editor
     /// </code>
     /// 更多信息请参考模块文档。
     /// </remarks>
-    public class UIManifestEditor: XEditor.Event.Internal.OnEditorInit
+    public class UIManifestEditor
     {
+        /// <summary>
+        /// icon 是 UIManifest 的自定义图标，用于优化资源的显示。
+        /// </summary>
         internal static Texture2D icon;
 
+        /// <summary>
+        /// manifest 维护了项目中所有的 UIManifest 实例。
+        /// </summary>
         internal static List<string> manifests;
 
         /// <summary>
-        /// 编辑器初始化方法，加载图标并注册项目窗口绘制回调。
+        /// watchers 维护了对所有 UIManifest 目录的监听。
         /// </summary>
-        [InitializeOnLoadMethod]
-        internal static void OnInit()
-        {
-            var pkg = XEditor.Utility.FindPackage();
-            icon = AssetDatabase.LoadAssetAtPath<Texture2D>($"Packages/{pkg.name}/Editor/Resources/Icon/Manifest.png");
-            if (icon) EditorApplication.projectWindowItemOnGUI += OnProjectWindowItemOnGUI;
-        }
+        internal static Dictionary<string, FileSystemWatcher> watchers = new();
 
         /// <summary>
         /// 项目窗口绘制回调，为 UIManifest 预制体添加自定义图标。
@@ -64,7 +63,7 @@ namespace EFramework.FairyGUI.Editor
         /// 收集项目中所有 UIManifest 资源，用于依赖关系处理。
         /// </summary>
         /// <param name="path">要添加到收集列表中的 UIManifest 路径</param>
-        internal static void Collect()
+        internal static void Collect(string path = null)
         {
             if (manifests == null)
             {
@@ -74,16 +73,41 @@ namespace EFramework.FairyGUI.Editor
                 {
                     var asset = XFile.NormalizePath(AssetDatabase.GUIDToAssetPath(assets[i]));
                     var mani = AssetDatabase.LoadAssetAtPath<UIManifest>(asset);
-                    if (mani && !manifests.Contains(asset)) manifests.Add(asset);
+                    if (mani && !manifests.Contains(asset))
+                    {
+                        manifests.Add(asset);
+                        Watch(mani.RawPath, asset);
+                    }
                 }
                 if (manifests.Count > 0) XLog.Debug("UIManifestEditor.Collect: find {0} manifest(s).", manifests.Count);
             }
+            if (!string.IsNullOrEmpty(path) && !manifests.Contains(path))
+            {
+                manifests.Add(path);
+            }
         }
-        
-        internal static void Collect(string path)
+
+        /// <summary>
+        /// Watch 监控 UIManifest 原始路径是否变更，若发生变更，则调用 Import 重新导入之。
+        /// </summary>
+        /// <param name="rawPath"></param>
+        /// <param name="assetPath"></param>
+        internal static void Watch(string rawPath, string assetPath)
         {
-            Collect();
-            if (!manifests.Contains(path)) manifests.Add(path);
+            if (string.IsNullOrEmpty(rawPath) || string.IsNullOrEmpty(assetPath)) return;
+
+            rawPath = XFile.NormalizePath(rawPath);
+            if (watchers.ContainsKey(rawPath) == false)
+            {
+                var watcher = new FileSystemWatcher(rawPath, "*.bytes")
+                {
+                    IncludeSubdirectories = true,
+                    EnableRaisingEvents = true,
+                    NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite | NotifyFilters.Size,
+                };
+                watcher.Changed += (sender, args) => XLoom.RunInMain(() => AssetDatabase.ImportAsset(assetPath, ImportAssetOptions.ForceUpdate));
+                watchers.Add(rawPath, watcher);
+            }
         }
 
         /// <summary>
@@ -144,82 +168,9 @@ namespace EFramework.FairyGUI.Editor
             Object.DestroyImmediate(go);
             AssetDatabase.Refresh();
 
+            Watch(rawPath, maniPath);
+
             return asset;
-        }
-
-        /// <summary>
-        /// 资源后处理器，处理 UIManifest 资源的导入和移动事件。
-        /// </summary>
-        internal class PostProcessor : AssetPostprocessor
-        {
-            /// <summary>
-            /// 处理所有资源的后处理事件，导入 UIManifest 资源。
-            /// </summary>
-            /// <param name="importedAssets">导入的资源路径</param>
-            /// <param name="deletedAssets">删除的资源路径</param>
-            /// <param name="movedAssets">移动的资源路径</param>
-            /// <param name="movedFromAssetPaths">资源移动前的路径</param>
-            static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
-            {
-                foreach (var path in importedAssets)
-                {
-                    if (path.EndsWith(".prefab") && AssetDatabase.LoadAssetAtPath<UIManifest>(path))
-                    {
-                        Import(path);
-                    }
-                }
-
-                foreach (var path in movedAssets)
-                {
-                    if (path.EndsWith(".prefab") && AssetDatabase.LoadAssetAtPath<UIManifest>(path))
-                    {
-                        Import(path);
-                    }
-                }
-            }
-        }
-        
-        public int Priority { get; }
-        public bool Singleton { get; }
-        void XEditor.Event.Internal.OnEditorInit.Process(params object[] args)
-        {
-            Collect();
-            foreach (var asset in manifests)
-            {
-                var mani = AssetDatabase.LoadAssetAtPath<UIManifest>(asset);
-                if (mani)
-                {
-                    var docAtlasPath = XFile.PathJoin(mani.RawPath, mani.PackageName + "_fui.bytes");
-                    if (XFile.HasFile(docAtlasPath))
-                    {
-                        var rA = XFile.FileMD5(mani.PackagePath + "_fui.bytes");
-                        var dA = XFile.FileMD5(XFile.PathJoin(mani.RawPath, mani.PackageName + "_fui.bytes"));
-                        if (!rA.Equals(dA)) AssetDatabase.ImportAsset(asset, ImportAssetOptions.ForceUpdate);
-                    }
-                    else XLog.Alert("UIManifestEditor.OnEditorInit: {0}Docs atlas don't exist,please check", docAtlasPath);
-                }
-            }
-        }
-        
-        /// <summary>
-        /// 用于监听图集更新
-        /// </summary>
-        [InitializeOnLoadMethod]
-        public static void AtlasListener()
-        {
-            Collect();
-            foreach (var asset in manifests)
-            {
-                var mani = AssetDatabase.LoadAssetAtPath<UIManifest>(asset);
-                if (mani)
-                {
-                    var watcher = new FileSystemWatcher(mani.RawPath, "*.bytes");
-                    watcher.IncludeSubdirectories = true;
-                    watcher.EnableRaisingEvents = true;
-                    watcher.NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite | NotifyFilters.Size;
-                    watcher.Changed += (sender, args) => XLoom.RunInMain((() => AssetDatabase.ImportAsset(asset, ImportAssetOptions.ForceUpdate)));
-                }
-            }
         }
 
         /// <summary>
@@ -352,6 +303,72 @@ namespace EFramework.FairyGUI.Editor
             }
             XLog.Debug("UIManifestEditor.Import: import <a href=\"file:///{0}\">{1}</a> from <a href=\"file:///{2}\">{3}</a> succeed.", Path.GetFullPath(path), path, Path.GetFullPath(mani.RawPath), mani.RawPath);
             return true;
+        }
+
+        /// <summary>
+        /// 资源事件监听器，处理 UIManifest 资源的导入和更新事件。
+        /// </summary>
+        internal class Listener : AssetPostprocessor, XEditor.Event.Internal.OnEditorInit
+        {
+            /// <summary>
+            /// OnPostprocessAllAssets 处理所有资源的后处理事件，导入 UIManifest 资源。
+            /// </summary>
+            /// <param name="importedAssets">导入的资源路径</param>
+            /// <param name="deletedAssets">删除的资源路径</param>
+            /// <param name="movedAssets">移动的资源路径</param>
+            /// <param name="movedFromAssetPaths">资源移动前的路径</param>
+            static void OnPostprocessAllAssets(string[] importedAssets, string[] deletedAssets, string[] movedAssets, string[] movedFromAssetPaths)
+            {
+                foreach (var path in importedAssets)
+                {
+                    if (path.EndsWith(".prefab") && AssetDatabase.LoadAssetAtPath<UIManifest>(path))
+                    {
+                        Import(path);
+                    }
+                }
+
+                foreach (var path in movedAssets)
+                {
+                    if (path.EndsWith(".prefab") && AssetDatabase.LoadAssetAtPath<UIManifest>(path))
+                    {
+                        Import(path);
+                    }
+                }
+            }
+
+            int XEditor.Event.Callback.Priority { get; }
+
+            bool XEditor.Event.Callback.Singleton { get; }
+
+            /// <summary>
+            /// OnEditorInit 事件回调处理了文件视图的绘制监听，对项目中的 UIManifest 进行收集并进行文件校验。
+            /// </summary>
+            /// <param name="args"></param>
+            void XEditor.Event.Internal.OnEditorInit.Process(params object[] args)
+            {
+                var pkg = XEditor.Utility.FindPackage();
+                icon = AssetDatabase.LoadAssetAtPath<Texture2D>($"Packages/{pkg.name}/Editor/Resources/Icon/Manifest.png");
+                if (icon) EditorApplication.projectWindowItemOnGUI += OnProjectWindowItemOnGUI;
+
+                XLog.Debug("UIManifestEditor.OnEditorInit: check and reload all manifest(s).", manifests.Count);
+                Collect();
+
+                foreach (var asset in manifests)
+                {
+                    var mani = AssetDatabase.LoadAssetAtPath<UIManifest>(asset);
+                    if (mani)
+                    {
+                        var rawPath = XFile.PathJoin(mani.RawPath, mani.PackageName + "_fui.bytes");
+                        if (XFile.HasFile(rawPath))
+                        {
+                            var rA = XFile.FileMD5(mani.PackagePath + "_fui.bytes");
+                            var dA = XFile.FileMD5(XFile.PathJoin(mani.RawPath, mani.PackageName + "_fui.bytes"));
+                            if (!rA.Equals(dA)) AssetDatabase.ImportAsset(asset, ImportAssetOptions.ForceUpdate);
+                        }
+                        else XLog.Error("UIManifestEditor.OnEditorInit: raw path doesn't exist, please check it: ", rawPath);
+                    }
+                }
+            }
         }
     }
 }
