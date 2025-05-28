@@ -312,7 +312,7 @@ namespace EFramework.FairyGUI.Editor
                 // 校验文件内容是否一致
                 foreach (var dep in mani.Dependency)
                 {
-                    if (dep is UIManifest) continue; // 忽略 UIManifest 引用
+                    if (dep is GameObject gdep && gdep && gdep.GetComponent<UIManifest>()) continue; // 忽略 UIManifest 引用
                     var dst = AssetDatabase.GetAssetPath(dep);
                     var src = XFile.PathJoin(mani.RawPath, Path.GetFileName(dst));
                     if (XFile.FileMD5(src) != XFile.FileMD5(dst)) // 对比文件的 MD5
@@ -389,7 +389,7 @@ namespace EFramework.FairyGUI.Editor
                             // 校验文件内容是否一致
                             foreach (var dep in mani.Dependency)
                             {
-                                if (dep is UIManifest) continue; // 忽略 UIManifest 引用
+                                if (dep is GameObject gdep && gdep && gdep.GetComponent<UIManifest>()) continue; // 忽略 UIManifest 引用
                                 var dst = AssetDatabase.GetAssetPath(dep);
                                 var src = XFile.PathJoin(mani.RawPath, Path.GetFileName(dst));
                                 if (XFile.FileMD5(src) != XFile.FileMD5(dst)) // 对比文件的 MD5
