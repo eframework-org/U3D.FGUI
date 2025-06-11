@@ -330,7 +330,7 @@ namespace EFramework.FairyGUI.Editor
                 if (icon) EditorGUIUtility.SetIconForObject(go, icon);
                 skips[path] = true;
             }
-            XLog.Debug("UIManifestEditor.Import: import <a href=\"file:///{0}\">{1}</a> from <a href=\"file:///{2}\">{3}</a> succeed.", Path.GetFullPath(path), path, Path.GetFullPath(mani.RawPath), mani.RawPath);
+            XLog.Debug("UIManifestEditor.Import: import <a href=\"file:///{0}\">{1}</a> from <a href=\"file:///{2}\">{3}</a> succeeded.", Path.GetFullPath(path), path, Path.GetFullPath(mani.RawPath), mani.RawPath);
             return true;
         }
 
