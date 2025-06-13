@@ -102,35 +102,79 @@ namespace EFramework.FairyGUI.Editor
             if (string.IsNullOrEmpty(rawPath) || string.IsNullOrEmpty(assetPath)) return;
 
             rawPath = XFile.NormalizePath(rawPath);
+            if (!XFile.HasDirectory(rawPath)) return;
+
             if (!watchers.ContainsKey(rawPath))
             {
                 var watcher = new FileSystemWatcher(rawPath)
                 {
-                    IncludeSubdirectories = true,
+                    IncludeSubdirectories = false,
                     EnableRaisingEvents = true,
                     NotifyFilter = NotifyFilters.FileName | NotifyFilters.LastWrite | NotifyFilters.Size,
                 };
-                watcher.Created += (sender, args) => XLoom.RunInMain(() =>
+
+                var maniName = Path.GetFileNameWithoutExtension(assetPath);
+                var maniPrefix = maniName + "_";
+                var maniFile = maniPrefix + "fui.bytes";
+                var dirty = new List<string>();
+                var expected = new List<string>();
+
+                void proc(string path)
                 {
-                    if (!args.FullPath.EndsWith(".meta"))
+                    if (path.Contains(maniPrefix))
                     {
-                        Import(assetPath);
+                        dirty.Add(Path.GetFileName(path));
+                        if (path.Contains(maniFile))
+                        {
+                            // 卸载原有的 Package，避免加载失败
+                            if (UIPackage.GetByName(maniName) != null) UIPackage.RemovePackage(maniName);
+
+                            var pkg = UIPackage.AddPackage(XFile.OpenFile(path), maniName, null);
+                            if (pkg != null)
+                            {
+                                UIPackage.RemovePackage(maniName);
+                                expected.Clear();
+                                expected.Add(maniFile);
+
+                                var itemsById = typeof(UIPackage).GetField("_itemsById", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).GetValue(pkg) as Dictionary<string, PackageItem>;
+                                foreach (var kvp in itemsById)
+                                {
+                                    var file = kvp.Value.file;
+                                    if (!string.IsNullOrEmpty(file) && !expected.Contains(file))
+                                    {
+                                        expected.Add(file);
+                                    }
+                                }
+
+                                // // manifest 文件的索引不为 1，则认定为非正常的导入流程，可能是外部的操作引起文件变更，如：Git 更新等
+                                // var index = dirty.IndexOf(maniFile);
+                                // if (index > 0 && index != 1)
+                                // {
+                                //     // 重置监听范围，这种方式不一定可靠，依赖 FairyGUI Editor 的生成顺序：manifest 文件的索引为 1
+                                //     // 否则可能导致监听失效：外部变更，但是 dirty 未清除
+                                //     dirty = dirty.GetRange(index - 1, dirty.Count - (index - 1));
+                                //     XLog.Notice("invalid watch");
+                                // }
+                            }
+                        }
+
+                        // 等待所有依赖都被重新发布完成
+                        if (expected.Count > 0 && expected.All(e => dirty.Contains(e)))
+                        {
+                            // 重置监控数据
+                            dirty.Clear();
+                            expected.Clear();
+
+                            // 有概率出现 Unity Editor 资源导入失败：Could not create asset from Assets/xxxx: File could not be read 或出现导入两次的情况
+                            // 原因1：FairyGUI Editor 未完全 Flush 文件，解决方案：延迟处理导入，XLoom.SetTimeout(() => Import(assetPath), 2000);
+                            // 原因2：外部的操作（Git 更新）引起文件变更导致 dirty 监控不正确，引起提前导入，解决方案：用户重新发布/导入即可
+                            Import(assetPath);
+                        }
                     }
-                });
-                watcher.Deleted += (sender, args) => XLoom.RunInMain(() =>
-                {
-                    if (!args.FullPath.EndsWith(".meta"))
-                    {
-                        Import(assetPath);
-                    }
-                });
-                watcher.Changed += (sender, args) => XLoom.RunInMain(() =>
-                {
-                    if (!args.FullPath.EndsWith(".meta"))
-                    {
-                        Import(assetPath);
-                    }
-                });
+                }
+
+                watcher.Created += (sender, args) => XLoom.RunInMain(() => proc(args.FullPath));
+                watcher.Changed += (sender, args) => XLoom.RunInMain(() => proc(args.FullPath));
                 watchers.Add(rawPath, watcher);
             }
         }
@@ -267,7 +311,10 @@ namespace EFramework.FairyGUI.Editor
                 mani.Dependency.Add(dep);
             }
 
-            var pkg = UIPackage.AddPackage(XFile.PathJoin(maniPath, maniName)); // Searching deps.
+            // 卸载原有的 Package，避免加载失败
+            if (UIPackage.GetByName(maniName) != null) UIPackage.RemovePackage(maniName);
+
+            var pkg = UIPackage.AddPackage(XFile.PathJoin(maniPath, maniName)); // 查找依赖项
             if (pkg != null)
             {
                 UIPackage.RemovePackage(maniName);
@@ -279,7 +326,7 @@ namespace EFramework.FairyGUI.Editor
                     for (var i = 0; i < manifests.Count; i++)
                     {
                         var temp = manifests[i];
-                        if (temp.EndsWith(dpname)) // Package name was unique.
+                        if (temp.EndsWith(dpname)) // Package name 是唯一的
                         {
                             if (visited.Contains(temp))
                             {
@@ -330,6 +377,7 @@ namespace EFramework.FairyGUI.Editor
                 if (icon) EditorGUIUtility.SetIconForObject(go, icon);
                 skips[path] = true;
             }
+
             XLog.Debug("UIManifestEditor.Import: import <a href=\"file:///{0}\">{1}</a> from <a href=\"file:///{2}\">{3}</a> succeeded.", Path.GetFullPath(path), path, Path.GetFullPath(mani.RawPath), mani.RawPath);
             return true;
         }
@@ -387,6 +435,7 @@ namespace EFramework.FairyGUI.Editor
                         if (XFile.HasDirectory(mani.RawPath))
                         {
                             // 校验文件内容是否一致
+                            var dirty = false;
                             foreach (var dep in mani.Dependency)
                             {
                                 if (dep is GameObject gdep && gdep && gdep.GetComponent<UIManifest>()) continue; // 忽略 UIManifest 引用
@@ -394,9 +443,11 @@ namespace EFramework.FairyGUI.Editor
                                 var src = XFile.PathJoin(mani.RawPath, Path.GetFileName(dst));
                                 if (XFile.FileMD5(src) != XFile.FileMD5(dst)) // 对比文件的 MD5
                                 {
-                                    Import(asset);
+                                    dirty = true;
+                                    break;
                                 }
                             }
+                            if (dirty) Import(asset);
                         }
                         else XLog.Error("UIManifestEditor.OnInit: raw path doesn't exist, please check it: ", mani.RawPath);
                     }
