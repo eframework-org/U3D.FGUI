@@ -39,6 +39,12 @@ UIManifest 实现了 FairyGUI 导出素材的清单管理功能，用于控制 U
 - 导出目录中是否包含有效的 FairyGUI 文件（如 _fui.bytes 文件）
 - 检查是否存在循环依赖（A 依赖 B，B 又依赖 A）
 
+### 2. 文件监听导入失败
+
+- 问题现象：有概率出现 Unity Editor 资源导入失败：Could not create asset from Assets/xxxx: File could not be read 或出现导入两次的情况
+- 问题原因：FairyGUI Editor 未完全 Flush 文件或者外部的操作（Git 更新）引起文件变更导致 dirty 监控不正确
+- 解决方案：重新发布/导入 UIManifest 资源
+
 更多问题，请查阅[问题反馈](../CONTRIBUTING.md#问题反馈)。
 
 ## 项目信息

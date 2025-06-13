@@ -1,5 +1,10 @@
 # 更新记录
 
+## [0.0.5] - 2025-06-13
+### 修复
+- 修复 UIManifestEditor 监听 RawPath 目录的导入流程问题
+- 修复 UIManifestEditor.OnEditorInit 事件监听的重复导入问题
+
 ## [0.0.4] - 2025-05-28
 ### 修复
 - 修复 UIManifest 实例循环引用导致的导入流程问题
