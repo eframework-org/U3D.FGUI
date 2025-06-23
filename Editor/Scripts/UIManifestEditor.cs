@@ -55,7 +55,7 @@ namespace EFramework.FairyGUI.Editor
         internal static Dictionary<string, bool> skips = new();
 
         /// <summary>
-        /// 项目窗口绘制回调，为 UIManifest 预制体添加自定义图标。
+        /// OnProjectWindowItemOnGUI 在项目窗口绘制回调，为 UIManifest 预制体添加自定义图标。
         /// </summary>
         /// <param name="guid">资源的 GUID</param>
         /// <param name="selectionRect">项目窗口中的绘制区域</param>
@@ -70,70 +70,73 @@ namespace EFramework.FairyGUI.Editor
         }
 
         /// <summary>
-        /// 收集项目中所有 UIManifest 资源，用于依赖关系处理。
+        /// Collect 查找并缓存项目中所有 UIManifest 资源，用于依赖关系处理。
         /// </summary>
-        /// <param name="path">要添加到收集列表中的 UIManifest 路径</param>
-        /// <param name="cache">是否强制从所有资源中查找 UIManifest 实例</param>
+        /// <param name="path">要添加到缓存列表中的 UIManifest 路径</param>
+        /// <param name="cache">是否从索引缓存中查找 UIManifest 列表</param>
         internal static void Collect(string path = null, bool cache = true)
         {
-            manifests = new List<string>();
-
             var changed = false;
-            var succeeded = false;
-            if (cache && XFile.HasFile(CachingFile))
+            if (manifests == null)
             {
-                succeeded = true;
-                try
+                manifests = new List<string>();
+
+                var succeeded = false;
+                if (cache && XFile.HasFile(CachingFile))
                 {
-                    var lines = File.ReadAllLines(CachingFile);
-                    foreach (var asset in lines)
+                    succeeded = true;
+                    try
                     {
-                        if (string.IsNullOrEmpty(asset)) continue;
-                        if (!XFile.HasFile(asset))
+                        var lines = File.ReadAllLines(CachingFile);
+                        foreach (var asset in lines)
                         {
-                            succeeded = false;
-                            break;
+                            if (string.IsNullOrEmpty(asset)) continue;
+                            if (!XFile.HasFile(asset))
+                            {
+                                succeeded = false;
+                                break;
+                            }
+                            var mani = AssetDatabase.LoadAssetAtPath<UIManifest>(asset);
+                            if (mani == null)
+                            {
+                                succeeded = false;
+                                break;
+                            }
+                            if (mani && !manifests.Contains(asset))
+                            {
+                                manifests.Add(asset);
+                                Watch(mani.RawPath, asset);
+                            }
                         }
+                    }
+                    catch (System.Exception e)
+                    {
+                        XLog.Panic(e, $"Read caching file failed: {CachingFile}");
+                        succeeded = false;
+                    }
+                }
+
+                if (!succeeded)
+                {
+                    manifests.Clear(); // 清理并全量查找
+
+                    var assets = AssetDatabase.FindAssets("t:Prefab"); // 在OnInit中无法通过AssetDatabase.FindAssets查询
+                    for (var i = 0; i < assets.Length; i++)
+                    {
+                        var asset = XFile.NormalizePath(AssetDatabase.GUIDToAssetPath(assets[i]));
                         var mani = AssetDatabase.LoadAssetAtPath<UIManifest>(asset);
-                        if (mani == null)
-                        {
-                            succeeded = false;
-                            break;
-                        }
                         if (mani && !manifests.Contains(asset))
                         {
                             manifests.Add(asset);
                             Watch(mani.RawPath, asset);
                         }
                     }
+
+                    changed = true;
                 }
-                catch (System.Exception e)
-                {
-                    XLog.Panic(e, $"Read caching file failed: {CachingFile}");
-                    succeeded = false;
-                }
+
+                if (manifests.Count > 0) XLog.Debug("UIManifestEditor.Collect: find {0} manifest(s).", manifests.Count);
             }
-
-            if (!succeeded)
-            {
-                manifests.Clear(); // 清理并全量查找
-
-                var assets = AssetDatabase.FindAssets("t:Prefab"); // 在OnInit中无法通过AssetDatabase.FindAssets查询
-                for (var i = 0; i < assets.Length; i++)
-                {
-                    var asset = XFile.NormalizePath(AssetDatabase.GUIDToAssetPath(assets[i]));
-                    var mani = AssetDatabase.LoadAssetAtPath<UIManifest>(asset);
-                    if (mani && !manifests.Contains(asset))
-                    {
-                        manifests.Add(asset);
-                        Watch(mani.RawPath, asset);
-                    }
-                }
-
-                changed = true;
-            }
-
-            if (manifests.Count > 0) XLog.Debug("UIManifestEditor.Collect: find {0} manifest(s).", manifests.Count);
 
             if (!string.IsNullOrEmpty(path) && !manifests.Contains(path))
             {
@@ -244,7 +247,7 @@ namespace EFramework.FairyGUI.Editor
         }
 
         /// <summary>
-        /// 创建 UIManifest 的菜单项处理方法。
+        /// Create 创建 UIManifest 的菜单项处理方法。
         /// </summary>
         [MenuItem("Assets/Create/FairyGUI/UI Manifest")]
         internal static void Create()
@@ -287,7 +290,7 @@ namespace EFramework.FairyGUI.Editor
         }
 
         /// <summary>
-        /// 创建 UIManifest 预制体资源。
+        /// Create 创建 UIManifest 预制体资源。
         /// </summary>
         /// <param name="maniPath">UIManifest 预制体的保存路径</param>
         /// <param name="rawPath">FairyGUI 导出素材的路径</param>
@@ -307,7 +310,7 @@ namespace EFramework.FairyGUI.Editor
         }
 
         /// <summary>
-        /// 导入 UIManifest 资源，处理其依赖关系。
+        /// Import 导入 UIManifest 资源，处理其依赖关系。
         /// </summary>
         /// <param name="path">UIManifest 资源路径</param>
         /// <param name="visited">已访问的 UIManifest 路径列表，用于检测循环依赖</param>
@@ -447,7 +450,7 @@ namespace EFramework.FairyGUI.Editor
         }
 
         /// <summary>
-        /// 资源事件监听器，处理 UIManifest 资源的导入和更新事件。
+        /// Listener 是资源事件监听器，处理 UIManifest 资源的导入和更新事件。
         /// </summary>
         internal class Listener : AssetPostprocessor, XEditor.Event.Internal.OnEditorInit, XEditor.Event.Internal.OnEditorLoad
         {

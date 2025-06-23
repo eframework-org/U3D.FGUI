@@ -52,6 +52,7 @@ public class TestUIManifestEditor
 
         AssetDatabase.Refresh();
         if (XFile.HasFile(UIManifestEditor.CachingFile)) XFile.DeleteFile(UIManifestEditor.CachingFile);
+        UIManifestEditor.manifests = null;
         foreach (var kvp in UIManifestEditor.watchers)
         {
             kvp.Value.Dispose();
@@ -69,6 +70,7 @@ public class TestUIManifestEditor
 
         AssetDatabase.Refresh();
         if (XFile.HasFile(UIManifestEditor.CachingFile)) XFile.DeleteFile(UIManifestEditor.CachingFile);
+        UIManifestEditor.manifests = null;
         foreach (var kvp in UIManifestEditor.watchers)
         {
             kvp.Value.Dispose();
@@ -94,9 +96,11 @@ public class TestUIManifestEditor
         Assert.IsNotNull(UIManifestEditor.manifests, "manifests 列表未初始化。");
         Assert.Contains(TestManifest, UIManifestEditor.manifests, "应当收集到 manifest。");
 
-        // 测试重复路径添加
-        File.AppendAllText(UIManifestEditor.CachingFile, "NoExistManifest"); // 写入不合法的数据
-        var originCount = UIManifestEditor.manifests.Count;
+
+        File.AppendAllText(UIManifestEditor.CachingFile, "NoExistManifest"); // 测试不合法的缓存
+        var originCount = UIManifestEditor.manifests.Count; // 测试重复路径添加
+
+        UIManifestEditor.manifests = null;
         UIManifestEditor.Collect(path: TestManifest, cache: true);
         Assert.AreEqual(originCount, UIManifestEditor.manifests.Count, "重复路径应当被忽略。");
 
