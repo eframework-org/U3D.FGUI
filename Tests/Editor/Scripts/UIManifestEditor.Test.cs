@@ -4,26 +4,31 @@
 
 #if UNITY_INCLUDE_TESTS
 using NUnit.Framework;
-using UnityEditor;
-using UnityEngine;
-using UnityEngine.TestTools;
 using System.IO;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.TestTools;
 using EFramework.Utility;
 using EFramework.Editor;
 using EFramework.FairyGUI;
 using EFramework.FairyGUI.Editor;
-using System.Reflection;
 
 public class TestUIManifestEditor
 {
     const string TestDir = "Assets/Temp/TestManifestEditor";
+
     readonly string TestManifest = XFile.PathJoin(TestDir, "TestManifest.prefab");
+
     readonly string TestRawPath = XFile.PathJoin(TestDir, "RawPath");
+
     readonly string TestPackage1 = XFile.PathJoin(TestDir, "Package1/Package1.prefab");
+
     readonly string TestPackage2 = XFile.PathJoin(TestDir, "Package2/Package2.prefab");
+
     readonly string TestPackageRaw1 = XFile.PathJoin(TestDir, "Package1Raw");
+
     readonly string TestPackageRaw2 = XFile.PathJoin(TestDir, "Package2Raw");
 
     [OneTimeSetUp]
@@ -46,7 +51,7 @@ public class TestUIManifestEditor
         if (!XFile.HasDirectory(prefabDir)) XFile.CreateDirectory(prefabDir);
 
         AssetDatabase.Refresh();
-        UIManifestEditor.manifests = null;
+        if (XFile.HasFile(UIManifestEditor.CachingFile)) XFile.DeleteFile(UIManifestEditor.CachingFile);
         foreach (var kvp in UIManifestEditor.watchers)
         {
             kvp.Value.Dispose();
@@ -63,7 +68,7 @@ public class TestUIManifestEditor
         if (XFile.HasDirectory(prefabDir)) XFile.DeleteDirectory(prefabDir);
 
         AssetDatabase.Refresh();
-        UIManifestEditor.manifests = null;
+        if (XFile.HasFile(UIManifestEditor.CachingFile)) XFile.DeleteFile(UIManifestEditor.CachingFile);
         foreach (var kvp in UIManifestEditor.watchers)
         {
             kvp.Value.Dispose();
@@ -76,7 +81,6 @@ public class TestUIManifestEditor
     public void Collect()
     {
         // Arrange
-        UIManifestEditor.manifests = null;
         var go = new GameObject();
         go.AddComponent<UIManifest>();
 
@@ -84,19 +88,25 @@ public class TestUIManifestEditor
         GameObject.DestroyImmediate(go);
         LogAssert.Expect(LogType.Error, new Regex(@"UIManifestEditor\.Import: raw path doesn't exist: .*"));
         // Act
-        UIManifestEditor.Collect(TestManifest);
+        UIManifestEditor.Collect(path: TestManifest, cache: false);
 
         // Assert
-        Assert.IsNotNull(UIManifestEditor.manifests, "manifests列表未初始化");
-        Assert.Contains(TestManifest, UIManifestEditor.manifests, "应当收集到manifest");
+        Assert.IsNotNull(UIManifestEditor.manifests, "manifests 列表未初始化。");
+        Assert.Contains(TestManifest, UIManifestEditor.manifests, "应当收集到 manifest。");
 
         // 测试重复路径添加
+        File.AppendAllText(UIManifestEditor.CachingFile, "NoExistManifest"); // 写入不合法的数据
         var originCount = UIManifestEditor.manifests.Count;
-        UIManifestEditor.Collect(TestManifest);
-        Assert.AreEqual(originCount, UIManifestEditor.manifests.Count, "重复路径应当被忽略");
+        UIManifestEditor.Collect(path: TestManifest, cache: true);
+        Assert.AreEqual(originCount, UIManifestEditor.manifests.Count, "重复路径应当被忽略。");
 
-        // Cleanup
-        UIManifestEditor.manifests = null;
+        Assert.IsTrue(XFile.HasFile(UIManifestEditor.CachingFile), $"索引缓存文件：${UIManifestEditor.CachingFile} 应当存在。");
+        var lines = File.ReadAllLines(UIManifestEditor.CachingFile);
+        foreach (var line in lines)
+        {
+            if (string.IsNullOrEmpty(line)) continue;
+            Assert.Contains(line, UIManifestEditor.manifests, "应当收集到 manifest 实例。");
+        }
     }
 
     [Test]
@@ -110,13 +120,13 @@ public class TestUIManifestEditor
         var asset = UIManifestEditor.Create(TestManifest, TestRawPath);
 
         // Assert
-        Assert.IsNotNull(asset, "应该成功创建资产");
+        Assert.IsNotNull(asset, "应该成功创建资产。");
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(TestManifest);
-        Assert.IsNotNull(prefab, "预制体应该存在");
+        Assert.IsNotNull(prefab, "预制体应该存在。");
 
         var manifest = prefab.GetComponent<UIManifest>();
-        Assert.IsNotNull(manifest, "预制体应该包含UIManifest组件");
-        Assert.AreEqual(TestRawPath, manifest.RawPath, "RawPath应该被正确设置");
+        Assert.IsNotNull(manifest, "预制体应该包含 UIManifest 组件。");
+        Assert.AreEqual(TestRawPath, manifest.RawPath, "RawPath 应该被正确设置。");
     }
 
     [Test]
@@ -128,7 +138,7 @@ public class TestUIManifestEditor
         var nonExistentPath = "Assets/Temp/NonManifest.prefab";
         PrefabUtility.SaveAsPrefabAsset(go, nonExistentPath);
         var result = UIManifestEditor.Import(nonExistentPath);
-        Assert.IsFalse(result, "当manifest不存在时应当返回False");
+        Assert.IsFalse(result, "当 manifest 不存在时应当返回False。");
         Object.DestroyImmediate(go);
         XFile.DeleteFile(nonExistentPath);
 
@@ -139,7 +149,7 @@ public class TestUIManifestEditor
         nonRawManifest.RawPath = "Assets/Temp/NonRawPath";
         PrefabUtility.SaveAsPrefabAsset(go, TestManifest);    // 保存预制体触发Import
         Object.DestroyImmediate(go);
-        Assert.IsFalse(result, "当RawPath不存在时应当返回False");
+        Assert.IsFalse(result, "当 RawPath 不存在时应当返回False。");
 
         // 创建一个manifest，并设置一个正确的RawPath
         // 创建测试用的fui.bytes文件
@@ -151,18 +161,18 @@ public class TestUIManifestEditor
         Object.DestroyImmediate(go);
 
         result = UIManifestEditor.Import(TestManifest);
-        Assert.IsTrue(result, "Import应当成功");
+        Assert.IsTrue(result, "Import 应当成功。");
 
         // 验证文件是否被复制
         var prefabDir = Path.GetDirectoryName(TestManifest);
         var copiedFuiPath = XFile.PathJoin(prefabDir, "TestManifest_fui.bytes");
-        Assert.IsTrue(XFile.HasFile(copiedFuiPath), "文件应该被复制到预制体目录");
+        Assert.IsTrue(XFile.HasFile(copiedFuiPath), "文件应该被复制到预制体目录。");
 
         // 验证Manifest属性是否被更新
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(TestManifest);
         var correctManifest = prefab.GetComponent<UIManifest>();
-        Assert.AreEqual("TestManifest", correctManifest.PackageName, "PackageName应该被正确设置");
-        Assert.AreEqual(TestManifest.Replace(".prefab", ""), correctManifest.PackagePath, "PackagePath应该被正确设置");
+        Assert.AreEqual("TestManifest", correctManifest.PackageName, "PackageName 应该被正确设置。");
+        Assert.AreEqual(TestManifest.Replace(".prefab", ""), correctManifest.PackagePath, "PackagePath 应该被正确设置。");
     }
 
     [Test]
@@ -218,7 +228,7 @@ public class TestUIManifestEditor
         UIManifestEditor.Collect(TestPackage2);
 
         var result = UIManifestEditor.Import(TestPackage1);
-        Assert.IsTrue(result, "导入应该成功，尽管有循环依赖");
+        Assert.IsTrue(result, "导入应该成功，尽管有循环依赖。");
     }
 
     [Test]

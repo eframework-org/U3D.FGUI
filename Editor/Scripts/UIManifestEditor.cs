@@ -40,6 +40,11 @@ namespace EFramework.FairyGUI.Editor
         internal static List<string> manifests;
 
         /// <summary>
+        /// CachingFile 是项目中 UIManifest 资源的路径索引缓存。
+        /// </summary>
+        internal const string CachingFile = "Library/UIManifest.db";
+
+        /// <summary>
         /// watchers 维护了对所有 UIManifest 目录的监听。
         /// </summary>
         internal static Dictionary<string, FileSystemWatcher> watchers = new();
@@ -68,11 +73,51 @@ namespace EFramework.FairyGUI.Editor
         /// 收集项目中所有 UIManifest 资源，用于依赖关系处理。
         /// </summary>
         /// <param name="path">要添加到收集列表中的 UIManifest 路径</param>
-        internal static void Collect(string path = null)
+        /// <param name="cache">是否强制从所有资源中查找 UIManifest 实例</param>
+        internal static void Collect(string path = null, bool cache = true)
         {
-            if (manifests == null)
+            manifests = new List<string>();
+
+            var changed = false;
+            var succeeded = false;
+            if (cache && XFile.HasFile(CachingFile))
             {
-                manifests = new List<string>();
+                succeeded = true;
+                try
+                {
+                    var lines = File.ReadAllLines(CachingFile);
+                    foreach (var asset in lines)
+                    {
+                        if (string.IsNullOrEmpty(asset)) continue;
+                        if (!XFile.HasFile(asset))
+                        {
+                            succeeded = false;
+                            break;
+                        }
+                        var mani = AssetDatabase.LoadAssetAtPath<UIManifest>(asset);
+                        if (mani == null)
+                        {
+                            succeeded = false;
+                            break;
+                        }
+                        if (mani && !manifests.Contains(asset))
+                        {
+                            manifests.Add(asset);
+                            Watch(mani.RawPath, asset);
+                        }
+                    }
+                }
+                catch (System.Exception e)
+                {
+                    XLog.Panic(e, $"Read caching file failed: {CachingFile}");
+                    succeeded = false;
+                }
+            }
+
+            if (!succeeded)
+            {
+                manifests.Clear(); // 清理并全量查找
+
                 var assets = AssetDatabase.FindAssets("t:Prefab"); // 在OnInit中无法通过AssetDatabase.FindAssets查询
                 for (var i = 0; i < assets.Length; i++)
                 {
@@ -84,11 +129,30 @@ namespace EFramework.FairyGUI.Editor
                         Watch(mani.RawPath, asset);
                     }
                 }
-                if (manifests.Count > 0) XLog.Debug("UIManifestEditor.Collect: find {0} manifest(s).", manifests.Count);
+
+                changed = true;
             }
+
+            if (manifests.Count > 0) XLog.Debug("UIManifestEditor.Collect: find {0} manifest(s).", manifests.Count);
+
             if (!string.IsNullOrEmpty(path) && !manifests.Contains(path))
             {
-                manifests.Add(path);
+                var mani = AssetDatabase.LoadAssetAtPath<UIManifest>(path);
+                if (mani)
+                {
+                    manifests.Add(path);
+                    changed = true;
+                }
+            }
+
+            if (changed)
+            {
+                try
+                {
+                    File.WriteAllLines(CachingFile, manifests);
+                    XLog.Debug("UIManifestEditor.Collect: write index caching into <a href=\"file:///{0}\">{1}</a>.", Path.GetFullPath(CachingFile), CachingFile);
+                }
+                catch (System.Exception e) { XLog.Panic(e, $"Write caching file failed: {CachingFile}"); }
             }
         }
 
@@ -264,7 +328,7 @@ namespace EFramework.FairyGUI.Editor
                 return false;
             }
 
-            Collect(path);
+            Collect(path: path);
 
             visited ??= new List<string>();
             if (visited.Contains(path)) return true;
@@ -426,7 +490,7 @@ namespace EFramework.FairyGUI.Editor
             void XEditor.Event.Internal.OnEditorInit.Process(params object[] args)
             {
                 XLog.Debug("UIManifestEditor.OnInit: check and reload all manifest(s).");
-                Collect();
+                Collect(cache: false);
                 foreach (var asset in manifests)
                 {
                     var mani = AssetDatabase.LoadAssetAtPath<UIManifest>(asset);
