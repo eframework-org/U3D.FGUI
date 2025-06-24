@@ -10,7 +10,7 @@ using EFramework.Editor;
 namespace EFramework.FairyGUI.Editor
 {
     /// <summary>
-    /// UICanvasEditor 是编辑器工具，为 UICanvas 组件提供自定义图标和项目视图集成。
+    /// UICanvasEditor 是 UICanvas 组件的编辑器工具，提供了自定义图标和项目视图集成。
     /// </summary>
     /// <remarks>
     /// <code>
@@ -24,7 +24,7 @@ namespace EFramework.FairyGUI.Editor
     public class UICanvasEditor : XEditor.Event.Internal.OnEditorLoad
     {
         /// <summary>
-        /// icon 是 UICanvas 的自定义图标，用于优化资源的显示。
+        /// icon 是 UICanvas 组件的自定义图标，用于优化资源的显示。
         /// </summary>
         internal static Texture2D icon;
 
@@ -33,7 +33,7 @@ namespace EFramework.FairyGUI.Editor
         bool XEditor.Event.Callback.Singleton { get => true; }
 
         /// <summary>
-        /// OnEditorLoad 事件回调处理了文件视图的绘制监听，并重新建立对 UICanvas 的监听。
+        /// OnEditorLoad 事件回调处理了文件视图的绘制监听。
         /// </summary>
         void XEditor.Event.Internal.OnEditorLoad.Process(params object[] _)
         {

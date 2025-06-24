@@ -15,7 +15,7 @@ using EFramework.Editor;
 namespace EFramework.FairyGUI.Editor
 {
     /// <summary>
-    /// UIManifest 编辑器工具，为 UIManifest 组件提供自定义图标、创建、导入和依赖管理功能。
+    /// UIManifestEditor 是 UIManifest 组件的编辑器工具，提供了自定义图标、创建、导入和依赖管理功能。
     /// </summary>
     /// <remarks>
     /// <code>
@@ -30,7 +30,7 @@ namespace EFramework.FairyGUI.Editor
     public class UIManifestEditor
     {
         /// <summary>
-        /// icon 是 UIManifest 的自定义图标，用于优化资源的显示。
+        /// icon 是 UIManifest 组件的自定义图标，用于优化资源的显示。
         /// </summary>
         internal static Texture2D icon;
 
