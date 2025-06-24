@@ -524,8 +524,7 @@ namespace EFramework.FairyGUI.Editor
             /// <summary>
             /// OnEditorLoad 事件回调处理了文件视图的绘制监听，并重新建立对 UIManifest 的监听。
             /// </summary>
-            /// <param name="args"></param>
-            void XEditor.Event.Internal.OnEditorLoad.Process(params object[] args)
+            void XEditor.Event.Internal.OnEditorLoad.Process(params object[] _)
             {
                 // 加载图标
                 var pkg = XEditor.Utility.FindPackage();
