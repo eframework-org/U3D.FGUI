@@ -184,9 +184,8 @@ public class TestUIManifestEditor
     {
         if (!XFile.HasDirectory(TestPackageRaw1)) XFile.CreateDirectory(TestPackageRaw1);
         if (!XFile.HasDirectory(TestPackageRaw2)) XFile.CreateDirectory(TestPackageRaw2);
-        var packagePath = XEditor.Utility.FindPackage().assetPath;
-        var package1Path = XFile.PathJoin(packagePath, "Tests/Runtime/Resources/Package1_fui.bytes");
-        var package2Path = XFile.PathJoin(packagePath, "Tests/Runtime/Resources/Package2_fui.bytes");
+        var package1Path = XFile.PathJoin(XEnv.ProjectPath, "Assets/Tests/Runtime/Resources/Package1_fui.bytes");
+        var package2Path = XFile.PathJoin(XEnv.ProjectPath, "Assets/Tests/Runtime/Resources/Package2_fui.bytes");
         if (XFile.HasFile(package1Path)) XFile.CopyFile(package1Path, XFile.PathJoin(TestPackageRaw1, "Package1_fui.bytes"));
         if (XFile.HasFile(package2Path)) XFile.CopyFile(package2Path, XFile.PathJoin(TestPackageRaw2, "Package2_fui.bytes"));
         var prefab1Dir = Path.GetDirectoryName(TestPackage1);
