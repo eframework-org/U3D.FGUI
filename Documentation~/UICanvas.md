@@ -39,13 +39,13 @@ UICanvas.Loader = (canvas) => {
 
 ```csharp
 // 获取按钮组件
-GButton button = canvas.Index<GButton>("panel.loginButton");
+var button = canvas.Index<GButton>("panel.loginButton");
 
 // 获取文本组件
-GTextField text = canvas.Index<GTextField>("panel.welcomeText");
+var text = canvas.Index<GTextField>("panel.welcomeText");
 
 // 获取列表组件
-GList list = canvas.Index<GList>("panel.itemList");
+var list = canvas.Index<GList>("panel.itemList");
 ```
 
 ## 常见问题

@@ -42,13 +42,13 @@ namespace EFramework.FairyGUI
     /// 通过名称或路径获取 UI 组件：
     /// 
     ///     // 获取按钮组件
-    ///     GButton button = canvas.Index&lt;GButton&gt;("panel.loginButton");
+    ///     var button = canvas.Index&lt;GButton&gt;("panel.loginButton");
     ///     
     ///     // 获取文本组件
-    ///     GTextField text = canvas.Index&lt;GTextField&gt;("panel.welcomeText");
+    ///     var text = canvas.Index&lt;GTextField&gt;("panel.welcomeText");
     ///     
     ///     // 获取列表组件
-    ///     GList list = canvas.Index&lt;GList&gt;("panel.itemList");
+    ///     var list = canvas.Index&lt;GList&gt;("panel.itemList");
     /// </code>
     /// 更多信息请参考模块文档。
     /// </remarks>
@@ -124,13 +124,15 @@ namespace EFramework.FairyGUI
         /// <returns>找到的对象，如果未找到则返回 null</returns>
         public object Index(string name, Type type)
         {
-            if (ui != null)
+            if (string.IsNullOrEmpty(name)) return null;
+            var wantsGObject = type == null || typeof(GObject).IsAssignableFrom(type);
+            if (wantsGObject && ui != null)
             {
-                var ret = ui.GetChild(name);
-                ret ??= ui.GetChildByPath(name);
-                if (ret != null) return ret;
+                var ret = ui.GetChild(name) ?? ui.GetChildByPath(name);
+                if (ret == null) return null;
+                return type == null || type.IsAssignableFrom(ret.GetType()) ? ret : null;
             }
-            return XComp.Index((object)gameObject, name, type);
+            return type == null ? null : XComp.Index((object)gameObject, name, type);
         }
     }
 }

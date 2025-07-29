@@ -30,6 +30,14 @@ public class TestUICanvas
             // 测试正常情况
             result = canvas.Index("Child1.Child2", typeof(GComponent));
             Assert.IsNotNull(result, "应该返回正确的子对象");
+
+            // 测试类型为空
+            result = canvas.Index("Child1.Child2", null);
+            Assert.IsNotNull(result, "应该返回正确的子对象");
+
+            // 测试类型错误
+            result = canvas.Index("Child1.Child2", typeof(GButton));
+            Assert.IsNull(result, "应该返回空的子对象");
         }
         else
         {
