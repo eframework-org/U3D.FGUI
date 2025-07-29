@@ -79,7 +79,7 @@ namespace EFramework.FairyGUI
     public static class UIUtility
     {
         /// <summary>
-        /// 通过名称或路径获取 UICanvas 中的指定类型组件。
+        /// Index 通过名称或路径获取 UICanvas 中的指定类型组件。
         /// </summary>
         /// <typeparam name="T">要获取的组件类型</typeparam>
         /// <param name="panel">UICanvas 实例</param>
@@ -88,7 +88,7 @@ namespace EFramework.FairyGUI
         public static T Index<T>(this UICanvas panel, string name) where T : class { if (panel) return XComp.Index<T>(panel.gameObject, name); else return null; }
 
         /// <summary>
-        /// 通过名称或路径获取 GComponent 中的指定类型组件。
+        /// Index 通过名称或路径获取 GComponent 中的指定类型组件。
         /// </summary>
         /// <typeparam name="T">要获取的组件类型</typeparam>
         /// <param name="comp">GComponent 实例</param>
@@ -97,21 +97,21 @@ namespace EFramework.FairyGUI
         public static T Index<T>(this GComponent comp, string name) where T : class { if (comp != null) return comp.GetChildByPath(name) as T; else return null; }
 
         /// <summary>
-        /// 设置 UI 对象的显示状态。
+        /// SetActiveState 设置 UI 对象的显示状态。
         /// </summary>
         /// <param name="rootObj">UI 对象</param>
         /// <param name="active">是否显示，true 为显示，false 为隐藏</param>
         public static void SetActiveState(this GObject rootObj, bool active) { rootObj.visible = active; }
 
         /// <summary>
-        /// 设置 UI 容器的显示状态。
+        /// SetActiveState 设置 UI 容器的显示状态。
         /// </summary>
         /// <param name="rootObj">UI 容器</param>
         /// <param name="active">是否显示，true 为显示，false 为隐藏</param>
         public static void SetActiveState(this GComponent rootObj, bool active) { rootObj.visible = active; }
 
         /// <summary>
-        /// 设置 UI 容器中指定路径子对象的显示状态。
+        /// SetActiveState 设置 UI 容器中指定路径子对象的显示状态。
         /// </summary>
         /// <param name="rootObj">UI 容器</param>
         /// <param name="path">子对象路径</param>

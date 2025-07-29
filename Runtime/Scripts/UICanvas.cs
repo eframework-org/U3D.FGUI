@@ -56,17 +56,17 @@ namespace EFramework.FairyGUI
     public class UICanvas : UIPanel, XComp.IIndexable
     {
         /// <summary>
-        /// 自定义包资源加载器，可用于实现自定义的包资源加载逻辑。
+        /// Loader 是自定义的包资源加载器，可用于实现自定义的包资源加载逻辑。
         /// </summary>
         public static Action<UICanvas> Loader;
 
         /// <summary>
-        /// 包资源清单，用于保持对原始资源包的引用。
+        /// packageMani 是包资源的清单，用于保持对原始资源包的引用。
         /// </summary>
         public UIManifest packageMani; // keep reference of raw assetbundle
 
         /// <summary>
-        /// 在组件唤醒时执行初始化，自动加载包资源。
+        /// Awake 在组件唤醒时执行初始化，自动加载包资源。
         /// </summary>
         protected virtual void Awake()
         {
@@ -82,7 +82,7 @@ namespace EFramework.FairyGUI
         }
 
         /// <summary>
-        /// 加载包资源及其依赖项。
+        /// LoadPackage 加载包资源及其依赖项。
         /// </summary>
         /// <param name="mani">要加载的 UI 资源清单</param>
         protected virtual void LoadPackage(UIManifest mani)
@@ -102,7 +102,7 @@ namespace EFramework.FairyGUI
         }
 
         /// <summary>
-        /// 更新源数据时的处理，在编辑器模式下自动更新 packageMani 引用。
+        /// OnUpdateSource 更新源数据时的处理，在编辑器模式下自动更新 packageMani 引用。
         /// </summary>
         /// <param name="data">更新的数据数组</param>
         protected override void OnUpdateSource(object[] data)
@@ -117,7 +117,7 @@ namespace EFramework.FairyGUI
         }
 
         /// <summary>
-        /// 实现 IIndexable 接口，通过名称获取子对象。
+        /// Index 实现了 IIndexable 接口，通过名称获取子对象。
         /// </summary>
         /// <param name="name">要查找的对象名称或路径</param>
         /// <param name="type">要返回的对象类型</param>

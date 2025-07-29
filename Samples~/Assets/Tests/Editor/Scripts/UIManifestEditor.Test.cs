@@ -96,7 +96,6 @@ public class TestUIManifestEditor
         Assert.IsNotNull(UIManifestEditor.manifests, "manifests 列表未初始化。");
         Assert.Contains(TestManifest, UIManifestEditor.manifests, "应当收集到 manifest。");
 
-
         File.AppendAllText(UIManifestEditor.CachingFile, "NoExistManifest"); // 测试不合法的缓存
         var originCount = UIManifestEditor.manifests.Count; // 测试重复路径添加
 
