@@ -107,9 +107,9 @@ namespace EFramework.FairyGUI
         /// <param name="data">更新的数据数组</param>
         protected override void OnUpdateSource(object[] data)
         {
-            if (Application.isPlaying)
-                return;
+            if (Application.isPlaying) return;
             base.OnUpdateSource(data);
+
 #if UNITY_EDITOR
             if (string.IsNullOrEmpty(packagePath)) packageMani = null;
             else packageMani = UnityEditor.AssetDatabase.LoadAssetAtPath<GameObject>($"{packagePath}.prefab").GetComponent<UIManifest>();
