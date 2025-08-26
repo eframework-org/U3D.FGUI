@@ -79,6 +79,7 @@ namespace EFramework.FairyGUI.Editor
             var changed = false;
             if (manifests == null)
             {
+                var startTime = XTime.GetMillisecond();
                 manifests = new List<string>();
 
                 var succeeded = false;
@@ -135,7 +136,7 @@ namespace EFramework.FairyGUI.Editor
                     changed = true;
                 }
 
-                if (manifests.Count > 0) XLog.Debug("UIManifestEditor.Collect: find {0} manifest(s).", manifests.Count);
+                if (manifests.Count > 0) XLog.Debug("UIManifestEditor.Collect: found {0} manifest(s) in {1}, elapsed {2}ms.", manifests.Count, succeeded ? "library" : "assets", XTime.GetMillisecond() - startTime);
             }
 
             if (!string.IsNullOrEmpty(path) && !manifests.Contains(path))
@@ -153,7 +154,7 @@ namespace EFramework.FairyGUI.Editor
                 try
                 {
                     File.WriteAllLines(CachingFile, manifests);
-                    XLog.Debug("UIManifestEditor.Collect: write index caching into <a href=\"file:///{0}\">{1}</a>.", Path.GetFullPath(CachingFile), CachingFile);
+                    XLog.Debug("UIManifestEditor.Collect: wrote index caching into <a href=\"file:///{0}\">{1}</a>.", Path.GetFullPath(CachingFile), CachingFile);
                 }
                 catch (System.Exception e) { XLog.Panic(e, $"Write caching file failed: {CachingFile}"); }
             }
